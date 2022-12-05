@@ -1,7 +1,7 @@
 # TropicalTurbulantics.jl
 
 Data and code to setup a large eddy simulation of the equatorial ocean using Oceananigans,
-following Whitt et al. 2022.
+following [Whitt et al. 2022](https://journals.ametsoc.org/view/journals/phoc/52/5/JPO-D-21-0153.1.xml).
 
 ## Downloading and processing setup data
 
@@ -9,9 +9,8 @@ The initial conditions, boundary conditions, and forcing for large eddy simulati
 are extracted from a simulation of the equatorial ocean using the
 Regional Ocean Modeling System (ROMS).
 
-1. Download the [ROMS data](https://figshare.com/ndownloader/files/28415004).
-   The forcing, boundary conditions, and initial conditions data are archived
-   in `data_les.tar`.
+1. Download the [ROMS data](https://figshare.com/ndownloader/files/28415004) provided by Whitt et al. 2022.
+   The forcing, boundary conditions, and initial conditions data are archived in `data_les.tar`.
 
 2. Untar `data_les.tar` to the directory `TropicalTurbulantics.jl/data_les`.
 
