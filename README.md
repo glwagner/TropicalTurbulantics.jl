@@ -29,6 +29,6 @@ The resulting plot should look like this:
 ## Running the large eddy simulation
 
 ```julia
-julia --project deep_cycle_turbulence.jl
+julia --project equatorial_turbulence_simulation.jl
 ```
 
