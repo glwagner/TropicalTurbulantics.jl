@@ -1,6 +1,6 @@
 # TropicalTurbulantics.jl
 
-Data and code to setup a large eddy simulation of the equatorial ocean using Oceananigans,
+Data and code to setup a large eddy simulation of the equatorial ocean using [Oceananigans](https://github.com/CliMA/Oceananigans.jl),
 following [Whitt et al. 2022](https://journals.ametsoc.org/view/journals/phoc/52/5/JPO-D-21-0153.1.xml).
 
 ## Downloading and processing setup data
