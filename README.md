@@ -23,6 +23,10 @@ Regional Ocean Modeling System (ROMS).
 julia --project process_data.jl
 ```
 
+The resulting plot should look like this:
+
+![forcing_and_bcs_and_ics_0N140W](https://user-images.githubusercontent.com/15271942/205716011-31131754-71a2-4cb5-bb49-fa4fa8047e67.png)
+
 ## Running the large eddy simulation
 
 ```julia
