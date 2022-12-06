@@ -1,7 +1,35 @@
+# Data processing for an equatorial turbulence simulation forced by 1/20ᵒ ROMS output, following
+#
+# Whitt, D. B. et al, "Simulation and Scaling of the Turbulence Vertical Heat Transport
+# and Deep-Cycle Turbulence across the Equatorial Pacific Cold Tongue", JPO, 2022
+#
+# See README.md for more.
+#
+# Greg's questions:
+#
+# 1. The variable "z" extends from 0 to 107.5 m.
+#    Are these cell centers, or interfaces (since the point "0" is included).
+#    If interfaces, is the bottom interface missing?
+#
+# 2. Is "beta" defined as the "haline expansion coefficient" (rather than haline _contraction_),
+#    and is therefore negative rather than positive?
+#
+#    More precisely, is the equation of state:
+#
+#    b = g (α ∂z T + β ∂z S)
+#
+#    or 
+#
+#    b = g (α ∂z T - β ∂z S)
+#
+# 3. It seems the only "problem" cells are the bottommost -- true? (Why?)
+
+
 using NCDatasets
 using GLMakie
 using Oceananigans.Units
 using JLD2
+using Dates
 
 function average_out!(Q, badvalue=0)
     for n = 1:length(Q)
@@ -39,21 +67,32 @@ V = dataset["vme"][:, :]
 T = dataset["tempme"][:, :]
 S = dataset["saltme"][:, :]
 
+# Fix bottommost row
 U[216, :] .= U[215, :]
 V[216, :] .= V[215, :]
 T[216, :] .= T[215, :]
 S[216, :] .= S[215, :]
 
-# Fix bottommost row
-@show extrema(U)
-@show extrema(V)
-@show extrema(T)
-@show extrema(S)
+@printf("extrema(U) = (%.2e, %.2e) \n", extrema(U)...) 
+@printf("extrema(V) = (%.2e, %.2e) \n", extrema(V)...)
+@printf("extrema(T) = (%.2e, %.2e) \n", extrema(T)...)
+@printf("extrema(S) = (%.2e, %.2e) \n", extrema(S)...)
 
 Fᵁ = dataset["dUdtFORCE"][:, :]
 Fⱽ = dataset["dVdtFORCE"][:, :]
 Fᵀ = dataset["dTdtFORCE"][:, :]
 #Fˢ = dataset["dSdtFORCE"]
+Fᴵ = dataset["dTdtSOLAR"][:, :]
+
+Fᵁ[216, :] .= Fᵁ[215, :]  
+Fⱽ[216, :] .= Fⱽ[215, :] 
+Fᵀ[216, :] .= Fᵀ[215, :] 
+Fᴵ[216, :] .= Fᴵ[215, :] 
+
+@printf("extrema(Fᵁ) = (%.2e, %.2e) \n", extrema(Fᵁ)...) 
+@printf("extrema(Fⱽ) = (%.2e, %.2e) \n", extrema(Fⱽ)...)
+@printf("extrema(Fᵀ) = (%.2e, %.2e) \n", extrema(Fᵀ)...)
+@printf("extrema(Fᴵ) = (%.2e, %.2e) \n", extrema(Fᴵ)...)
 
 ρᵣ = dataset["rho0"]
 
@@ -85,9 +124,21 @@ for Q in [Qᵁ_bottom,
     average_out!(Q, 0)
 end
 
-Fᴵ = dataset["dTdtSOLAR"][:, :]
+@printf("extrema(Qᵁ_surface) = (%.2e, %.2e) \n", extrema(Qᵁ_surface)...) 
+@printf("extrema(Qⱽ_surface) = (%.2e, %.2e) \n", extrema(Qⱽ_surface)...)
+@printf("extrema(Qᵀ_surface) = (%.2e, %.2e) \n", extrema(Qᵀ_surface)...)
+@printf("extrema(Qˢ_surface) = (%.2e, %.2e) \n", extrema(Qˢ_surface)...)
+
+@printf("extrema(Qᵁ_bottom) = (%.2e, %.2e) \n", extrema(Qᵁ_bottom)...) 
+@printf("extrema(Qⱽ_bottom) = (%.2e, %.2e) \n", extrema(Qⱽ_bottom)...)
+@printf("extrema(Qᵀ_bottom) = (%.2e, %.2e) \n", extrema(Qᵀ_bottom)...)
+@printf("extrema(Qˢ_bottom) = (%.2e, %.2e) \n", extrema(Qˢ_bottom)...)
+
 thermal_expansion = dataset["alpha"][:]
-haline_contraction = dataset["beta"][:]
+haline_contraction = - dataset["beta"][:]
+
+@printf("thermal expansion = %.2e \n", thermal_expansion)
+@printf("haline contraction = %.2e \n", haline_contraction)
 
 fig = Figure(resolution=(1600, 1600))
 
@@ -101,15 +152,15 @@ hmV = heatmap!(axV, time_hours, z, permutedims(V), colormap=:balance, colorrange
 hmT = heatmap!(axT, time_hours, z, permutedims(T), colormap=:thermal, colorrange=(20, 26.1))
 hmS = heatmap!(axS, time_hours, z, permutedims(S), colormap=:haline, colorrange=(34.9, 35.3))
 
-Colorbar(fig[0, 1], hmU, vertical=false, label="Zonal velocity (m s⁻¹)")
-Colorbar(fig[0, 2], hmV, vertical=false, label="Meridional velocity (m s⁻¹)")
-Colorbar(fig[4, 1], hmT, vertical=false, label="Temperature (ᵒC)")
-Colorbar(fig[4, 2], hmS, vertical=false, label="Salinity (g kg⁻¹)")
+Colorbar(fig[1, 0], hmU, vertical=false, label="Zonal velocity (m s⁻¹)")
+Colorbar(fig[1, 3], hmV, vertical=false, label="Meridional velocity (m s⁻¹)")
+Colorbar(fig[3, 0], hmT, vertical=false, label="Temperature (ᵒC)")
+Colorbar(fig[3, 3], hmS, vertical=false, label="Salinity (g kg⁻¹)")
 
 axQU = Axis(fig[2, 1], xlabel="Time (hrs)", ylabel="Zonal momentum flux (m² s⁻²)")
 axQV = Axis(fig[2, 2], xlabel="Time (hrs)", ylabel="Meridional momentum flux (m² s⁻²)")
-axQT = Axis(fig[5, 1], xlabel="Time (hrs)", ylabel="Temperature flux (m² s⁻²)")
-axQS = Axis(fig[5, 2], xlabel="Time (hrs)", ylabel="Salt flux (m² s⁻²)")
+axQT = Axis(fig[4, 1], xlabel="Time (hrs)", ylabel="Temperature flux (m² s⁻²)")
+axQS = Axis(fig[4, 2], xlabel="Time (hrs)", ylabel="Salt flux (m² s⁻²)")
 
 lines!(axQU, time_hours, Qᵁ_surface)
 lines!(axQV, time_hours, Qⱽ_surface)
@@ -121,8 +172,9 @@ lines!(axQV, time_hours, Qⱽ_bottom)
 lines!(axQT, time_hours, Qᵀ_bottom)
 lines!(axQS, time_hours, Qˢ_bottom)
 
-axI = Axis(fig[6, 1], xlabel="Time (hrs)", ylabel="z (m)")
-heatmap!(axI, time_hours, z, permutedims(insolation), colorrange=(0, 1e-5))
+axI = Axis(fig[5, 1], xlabel="Time (hrs)", ylabel="z (m)")
+hmI = heatmap!(axI, time_hours, z, permutedims(Fᴵ), colorrange=(0, 1e-5))
+Colorbar(fig[5, 0], hmI, vertical=false, label="Solar insolation temperature flux divergence (ᵒC m s⁻¹)")
 
 display(fig)
 
@@ -147,15 +199,15 @@ file["V"] = V
 file["T"] = T
 file["S"] = S
 
-file["Qᵁ_surface"] =  Qᵁ_surface
-file["Qⱽ_surface"] =  Qⱽ_surface
-file["Qᵀ_surface"] =  Qᵀ_surface
-file["Qˢ_surface"] =  Qˢ_surface
+file["Qᵁ_surface"] = Qᵁ_surface
+file["Qⱽ_surface"] = Qⱽ_surface
+file["Qᵀ_surface"] = Qᵀ_surface
+file["Qˢ_surface"] = Qˢ_surface
 
-file["Qᵁ_bottom"]  =  Qᵁ_bottom
-file["Qⱽ_bottom"]  =  Qⱽ_bottom
-file["Qᵀ_bottom"]  =  Qᵀ_bottom
-file["Qˢ_bottom"]  =  Qˢ_bottom
+file["Qᵁ_bottom"] = Qᵁ_bottom
+file["Qⱽ_bottom"] = Qⱽ_bottom
+file["Qᵀ_bottom"] = Qᵀ_bottom
+file["Qˢ_bottom"] = Qˢ_bottom
 
 file["Fᵁ"] = Fᵁ 
 file["Fⱽ"] = Fⱽ 

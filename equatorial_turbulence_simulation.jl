@@ -30,6 +30,17 @@ Fᵁ = file["Fᵁ"]
 Fⱽ = file["Fⱽ"]
 Fᵀ = file["Fᵀ"]
 Fᴵ = file["Fᴵ"]
+
+Qᵁ_surface = file["Qᵁ_surface"]
+Qⱽ_surface = file["Qⱽ_surface"]
+Qᵀ_surface = file["Qᵀ_surface"]
+Qˢ_surface = file["Qˢ_surface"]
+
+Qᵁ_bottom = file["Qᵁ_bottom"]
+Qⱽ_bottom = file["Qⱽ_bottom"]
+Qᵀ_bottom = file["Qᵀ_bottom"]
+Qˢ_bottom = file["Qˢ_bottom"]
+
 thermal_expansion = file["thermal_expansion"]
 haline_contraction = file["haline_contraction"]
 
@@ -61,14 +72,14 @@ equation_of_state = LinearEquationOfState(; thermal_expansion, haline_contractio
 n = Ref(1)
 
 # Callback to add to Simulation
-function update_forcing_time_index(sim)
+function update_time_index(sim)
     nn = findfirst(t -> t > time(simulation), forcing_times)
     n[] = nn
     return nothing
 end
 
-@inline function tendency_forcing(i, j, k, grid, clock, model_fields, params)
-    n_reference, F, tᶠ = params
+@inline function interp_forcing(i, j, k, grid, clock, model_fields, params)
+    n_reference, tᶠ, F = params
     n = n_reference[]
 
     @inbounds begin
@@ -82,17 +93,67 @@ end
     t = clock.time
     dFdt = (F₂ - F₁) / (t₂ - t₁)
 
-    return 0 #F₁ + dFdt * (t - t₁)
+    F = F₁ + dFdt * (t - t₁)
+
+    #return F
+    return ifelse(F > 1.0, 0.0, F)
 end
+
+@inline function interp_bc(i, j, grid, clock, model_fields, params)
+    n_reference, tᶠ, Q = params
+    n = n_reference[]
+
+    @inbounds begin
+        Q₁ = Q[n-1]
+        Q₂ = Q[n]
+        t₁ = tᶠ[n-1]
+        t₂ = tᶠ[n]
+    end
+
+    # Linear interpolation
+    t = clock.time
+    dQdt = (Q₂ - Q₁) / (t₂ - t₁)
+
+    Q = Q₁ + dQdt * (t - t₁)
+
+    return Q
+end
+
+# Convert CPU arrays to GPU arrays if necessary:
+tᶠ = arch_array(architecture(grid), forcing_times)
 
 Fᵁ = arch_array(architecture(grid), Fᵁ)
 Fⱽ = arch_array(architecture(grid), Fⱽ)
-Fᵀ = arch_array(architecture(grid), Fᵀ .+ Fᴵ)
-tᶠ = arch_array(architecture(grid), forcing_times)
 
-u_forcing = Forcing(tendency_forcing, discrete_form=true, parameters=(n, Fᵁ, tᶠ))
-v_forcing = Forcing(tendency_forcing, discrete_form=true, parameters=(n, Fⱽ, tᶠ))
-T_forcing = Forcing(tendency_forcing, discrete_form=true, parameters=(n, Fᵀ, tᶠ))
+# Note: combine ROMS tendency + insolution
+Fᵀ = arch_array(architecture(grid), Fᵀ .+ Fᴵ)
+
+Qᵁ_surface = arch_array(architecture(grid), Qᵁ_surface)
+Qⱽ_surface = arch_array(architecture(grid), Qⱽ_surface)
+Qᵀ_surface = arch_array(architecture(grid), Qᵀ_surface)
+Qˢ_surface = arch_array(architecture(grid), Qˢ_surface)
+Qᵁ_bottom  = arch_array(architecture(grid), Qᵁ_bottom)
+Qⱽ_bottom  = arch_array(architecture(grid), Qⱽ_bottom)
+Qᵀ_bottom  = arch_array(architecture(grid), Qᵀ_bottom)
+Qˢ_bottom  = arch_array(architecture(grid), Qˢ_bottom)
+
+u_forcing = Forcing(interp_forcing, discrete_form=true, parameters=(n, tᶠ, Fᵁ))
+v_forcing = Forcing(interp_forcing, discrete_form=true, parameters=(n, tᶠ, Fⱽ))
+T_forcing = Forcing(interp_forcing, discrete_form=true, parameters=(n, tᶠ, Fᵀ))
+
+u_surface_bc = FluxBoundaryCondition(interp_bc, discrete_form=true, parameters=(n, tᶠ, Qᵁ_surface))
+v_surface_bc = FluxBoundaryCondition(interp_bc, discrete_form=true, parameters=(n, tᶠ, Qⱽ_surface))
+T_surface_bc = FluxBoundaryCondition(interp_bc, discrete_form=true, parameters=(n, tᶠ, Qᵀ_surface))
+S_surface_bc = FluxBoundaryCondition(interp_bc, discrete_form=true, parameters=(n, tᶠ, Qˢ_surface))
+u_bottom_bc  = FluxBoundaryCondition(interp_bc, discrete_form=true, parameters=(n, tᶠ, Qᵁ_bottom))
+v_bottom_bc  = FluxBoundaryCondition(interp_bc, discrete_form=true, parameters=(n, tᶠ, Qⱽ_bottom))
+T_bottom_bc  = FluxBoundaryCondition(interp_bc, discrete_form=true, parameters=(n, tᶠ, Qᵀ_bottom))
+S_bottom_bc  = FluxBoundaryCondition(interp_bc, discrete_form=true, parameters=(n, tᶠ, Qˢ_bottom))
+
+u_bcs = FieldBoundaryConditions(top=u_surface_bc, bottom=u_bottom_bc)
+v_bcs = FieldBoundaryConditions(top=v_surface_bc, bottom=v_bottom_bc)
+T_bcs = FieldBoundaryConditions(top=T_surface_bc, bottom=T_bottom_bc)
+S_bcs = FieldBoundaryConditions(top=S_surface_bc, bottom=S_bottom_bc)
 
 #####
 ##### LES setup with AMD closure and RK3 time-stepping
@@ -104,6 +165,7 @@ model = NonhydrostaticModel(; grid,
                             tracers = (:T, :S),
                             buoyancy = SeawaterBuoyancy(; equation_of_state),
                             forcing = (u=u_forcing, v=v_forcing, T=T_forcing),
+                            boundary_conditions = (u=u_bcs, v=v_bcs, T=T_bcs, S=S_bcs),
                             closure = AnisotropicMinimumDissipation())
 
 Uᵢ = reshape(U[:, 1], 1, 1, Nz)
@@ -120,7 +182,7 @@ set!(model; u=Uᵢ, v=Vᵢ, T=Tᵢ, S=Sᵢ)
 
 simulation = Simulation(model, Δt=1e-3, stop_iteration=10)
 
-simulation.callbacks[:update_forcing_time] = Callback(update_forcing_time_index)
+simulation.callbacks[:update_time_index] = Callback(update_time_index)
 
 wizard = TimeStepWizard(cfl=0.5, max_change=1.1)
 simulation.callbacks[:wizard] = Callback(wizard, IterationInterval(10))
