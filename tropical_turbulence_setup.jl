@@ -220,10 +220,10 @@ function tropical_turbulence_setup(arch = CPU();
     T_bottom_bc  = FluxBoundaryCondition(interp_bc, discrete_form=true, parameters=(n, tᶠ, Qᵀ_bottom))
     S_bottom_bc  = FluxBoundaryCondition(interp_bc, discrete_form=true, parameters=(n, tᶠ, Qˢ_bottom))
 
-    u_bcs = FieldBoundaryConditions(top=u_surface_bc, bottom=u_bottom_bc)
-    v_bcs = FieldBoundaryConditions(top=v_surface_bc, bottom=v_bottom_bc)
-    T_bcs = FieldBoundaryConditions(top=T_surface_bc, bottom=T_bottom_bc)
-    S_bcs = FieldBoundaryConditions(top=S_surface_bc, bottom=S_bottom_bc)
+    u_bcs = FieldBoundaryConditions(top=u_surface_bc) #, bottom=u_bottom_bc)
+    v_bcs = FieldBoundaryConditions(top=v_surface_bc) #, bottom=v_bottom_bc)
+    T_bcs = FieldBoundaryConditions(top=T_surface_bc) #, bottom=T_bottom_bc)
+    S_bcs = FieldBoundaryConditions(top=S_surface_bc) #, bottom=S_bottom_bc)
 
     #####
     ##### LES setup with AMD closure and RK3 time-stepping

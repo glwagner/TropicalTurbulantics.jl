@@ -5,25 +5,11 @@
 #
 # See README.md for more.
 #
-# Greg's questions:
+# Notes:
 #
-# 1. The variable "z" extends from 0 to 107.5 m.
-#    Are these cell centers, or interfaces (since the point "0" is included).
-#    If interfaces, is the bottom interface missing?
-#
-# 2. Is "beta" defined as the "haline expansion coefficient" (rather than haline _contraction_),
-#    and is therefore negative rather than positive?
-#
-#    More precisely, is the equation of state:
-#
-#    b ∼ α T + β S
-#
-#    or 
-#
-#    b ∼ α T - β S
+# 1. The variable "z" extends from 0 to 107.5 m, so we add the "bottom" interface at 108m.
 #
 # 3. It seems the only "problem" cells are the bottommost -- true? (Why?)
-
 
 using NCDatasets
 using GLMakie
@@ -96,15 +82,15 @@ Fᴵ[216, :] .= Fᴵ[215, :]
 
 ρᵣ = dataset["rho0"]
 
-Qᵁ_bottom = dataset["nududzbot"][:]
-Qⱽ_bottom = dataset["nududzbot"][:]
-Qᵀ_bottom = dataset["kappadsdzbot"][:]
-Qˢ_bottom = dataset["kappadtdzbot"][:]
+Qᵁ_bottom = - dataset["nududzbot"][:]
+Qⱽ_bottom = - dataset["nududzbot"][:]
+Qᵀ_bottom = - dataset["kappadsdzbot"][:]
+Qˢ_bottom = - dataset["kappadtdzbot"][:]
 
-Qᵁ_surface = dataset["nududztop"][:]
-Qⱽ_surface = dataset["nududztop"][:]
-Qᵀ_surface = dataset["kappadsdztop"][:]
-Qˢ_surface = dataset["kappadtdztop"][:]
+Qᵁ_surface = - dataset["nududztop"][:]
+Qⱽ_surface = - dataset["nududztop"][:]
+Qᵀ_surface = - dataset["kappadsdztop"][:]
+Qˢ_surface = - dataset["kappadtdztop"][:]
 
 # Fix first value
 Qᵁ_surface[1] = Qᵁ_surface[2]
@@ -135,6 +121,8 @@ end
 @printf("extrema(Qˢ_bottom) = (%.2e, %.2e) \n", extrema(Qˢ_bottom)...)
 
 thermal_expansion = dataset["alpha"][:]
+
+# Note sign convention
 haline_contraction = - dataset["beta"][:]
 
 @printf("thermal expansion = %.2e \n", thermal_expansion)
