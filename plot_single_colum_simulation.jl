@@ -25,7 +25,7 @@ Ri⁻¹ = 1 ./ interior(Rit, 1, 1, :, :)
 umax = max(maximum(abs, u), maximum(abs, v))
 ulim = 3umax / 4
 
-fig = Figure(resolution=(1800, 1200))
+fig = Figure(resolution=(2400, 1200))
 
 ax_u = Axis(fig[1, 1], xlabel="Time (days)", ylabel="z (m)")
 ax_v = Axis(fig[1, 2], xlabel="Time (days)", ylabel="z (m)")
@@ -49,4 +49,6 @@ Colorbar(fig[3, 0], hm_e, flipaxis=false, label="Turbulent kinetic energy (m s�
 Colorbar(fig[3, 3], hm_R, label="1 / Ri")
 
 display(fig)
+
+save("tropical_turbulence_single_column_simulation.png", fig)
 

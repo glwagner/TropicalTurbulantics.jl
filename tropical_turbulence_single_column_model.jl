@@ -57,7 +57,7 @@ set!(model; e=1e-9, setup.initial_conditions...)
 ##### + callback to update the forcing time index every iteration
 #####
 
-simulation = Simulation(model, Δt=1minute, stop_time=7day)
+simulation = Simulation(model, Δt=1minute, stop_time=33days)
 
 simulation.callbacks[:update_time_index] = setup.update_time_index
 
