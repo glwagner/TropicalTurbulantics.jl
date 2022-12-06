@@ -3,11 +3,11 @@ using Printf
 
 include("tropical_turbulence_setup.jl")
 
-arch = CPU()
+arch = GPU()
 setup = tropical_turbulence_setup(arch)
 
 Lh = 216
-Nh = 1 # horizontal resolution is uniform Lh / Nh
+Nh = 216 # horizontal resolution is uniform Lh / Nh
 
 Nz = length(setup.z) - 1
 
@@ -34,11 +34,11 @@ set!(model; setup.initial_conditions...)
 ##### + callback to update the forcing time index every iteration
 #####
 
-simulation = Simulation(model, Δt=1e-3, stop_iteration=10)
+simulation = Simulation(model, Δt=1e-3, stop_time=1day)
 
 simulation.callbacks[:update_time_index] = setup.update_time_index
 
-wizard = TimeStepWizard(cfl=0.5, max_change=1.1)
+wizard = TimeStepWizard(cfl=0.5, max_change=1.1, max_Δt=1minute)
 simulation.callbacks[:wizard] = Callback(wizard, IterationInterval(10))
 
 function progress(sim)
