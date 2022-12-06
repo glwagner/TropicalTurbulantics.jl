@@ -54,7 +54,7 @@ Return a setup for simulating tropical deep cycle turbulence.
 function tropical_turbulence_setup(arch = CPU();
                                    z = nothing,
                                    Nz = 216,
-                                   datapath = "forcing_and_ics_0N140W.jld2")
+                                   datapath = "forcing_and_bcs_and_ics_0N140W.jld2")
                                      
 
     # Load data
