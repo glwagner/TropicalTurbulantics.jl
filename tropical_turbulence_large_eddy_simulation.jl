@@ -6,9 +6,11 @@ include("tropical_turbulence_setup.jl")
 arch = CPU()
 setup = tropical_turbulence_setup(arch)
 
-Nz = length(setup.z) - 1
-Nh = 1
 Lh = 216
+Nh = 1 # horizontal resolution is uniform Lh / Nh
+
+Nz = length(setup.z) - 1
+
 grid = RectilinearGrid(arch,
                        size = (Nh, Nh, Nz),
                        x = (0, Nh),
