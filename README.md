@@ -31,9 +31,17 @@ The resulting plot should look like this:
 
 ![forcing_and_bcs_and_ics_0N140W](https://user-images.githubusercontent.com/15271942/205972330-ec682744-6d2b-46a4-95b2-65df86182f60.png)
 
-## Running the large eddy simulation
+## Running and analyzing the single column model
 
 ```julia
-julia --project equatorial_turbulence_simulation.jl
+julia --project tropical_turbulence_single_column_model.jl
 ```
+
+After the simulation is run, the results may be plotted with
+
+
+```julia
+julia --project plot_single_column_simulation.jl
+```
+
 
