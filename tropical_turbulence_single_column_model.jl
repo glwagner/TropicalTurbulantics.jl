@@ -57,7 +57,7 @@ set!(model; e=1e-9, setup.initial_conditions...)
 ##### + callback to update the forcing time index every iteration
 #####
 
-simulation = Simulation(model, Δt=1minute, stop_time=1day)
+simulation = Simulation(model, Δt=1minute, stop_time=7day)
 
 simulation.callbacks[:update_time_index] = setup.update_time_index
 
@@ -75,6 +75,17 @@ function progress(sim)
 end
 
 simulation.callbacks[:progress] = Callback(progress, IterationInterval(10))
+
+u, v, w = model.velocities
+b = Oceananigans.BuoyancyModels.buoyancy(model)
+
+Ri = ∂z(b) / (∂z(u)^2 + ∂z(v)^2)
+outputs = merge(model.velocities, model.tracers, (; Ri, b)) 
+
+simulation.output_writers[:jld2] = JLD2OutputWriter(model, outputs,
+                                                    schedule = TimeInterval(20minutes),
+                                                    filename = "tropical_turbulence_single_column_model.jld2",
+                                                    overwrite_existing = true)
 
 run!(simulation)
 
