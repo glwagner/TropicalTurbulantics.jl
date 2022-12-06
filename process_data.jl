@@ -27,10 +27,10 @@ dataset = Dataset(filepath)
 
 z = dataset["z"][:]
 z[end] = 0
-time = dataset["time"][:]
-Nt = length(time)
+time_dates = dataset["time"][:]
+Nt = length(time_dates)
 
-time_seconds = datetime2unix.(time)
+time_seconds = datetime2unix.(time_dates)
 time_seconds .-= time_seconds[1]
 time_hours = time_seconds ./ hours
 
@@ -136,7 +136,7 @@ rm(jld2filename, force=true)
 file = jldopen(jld2filename, "a+")
 
 file["z"] = z
-file["time"] = time
+file["time_dates"] = time_dates
 file["time_seconds"] = time_seconds
 file["ρᵣ"] = ρᵣ
 file["thermal_expansion"]  = thermal_expansion

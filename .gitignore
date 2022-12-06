@@ -28,3 +28,4 @@ Manifest.toml
 *.jld2
 *.png
 *.DS_Store
+*.swp
