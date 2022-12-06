@@ -11,8 +11,13 @@ Regional Ocean Modeling System (ROMS).
 
 1. Download the [ROMS data](https://figshare.com/ndownloader/files/28415004) provided by Whitt et al. 2022.
    The forcing, boundary conditions, and initial conditions data are archived in `data_les.tar`.
+   Place `data_les.tar` in the root directory `TropicalTurbulantics.jl/`.
 
-2. Untar `data_les.tar` to the directory `TropicalTurbulantics.jl/data_les`.
+2. Untar `data_les.tar` to the directory `TropicalTurbulantics.jl/data_les`:
+
+```
+tar xvf data_les.tar
+```
 
 3. Run the julia script `process_data.jl`, which loads the NetCDF data,
    removes spurious values, plots the cleaned data, and saves the cleaned data
