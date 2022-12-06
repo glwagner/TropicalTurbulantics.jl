@@ -5,9 +5,9 @@ following [Whitt et al. 2022](https://journals.ametsoc.org/view/journals/phoc/52
 
 ## Downloading and processing setup data
 
-The initial conditions, boundary conditions, and forcing for large eddy simulations
+The initial conditions, boundary conditions, and forcing data for large eddy simulations
 are extracted from a simulation of the equatorial ocean using the
-Regional Ocean Modeling System (ROMS).
+Regional Ocean Modeling System (ROMS). To download and process the setup data,
 
 1. Download the [ROMS data](https://figshare.com/ndownloader/files/28415004) provided by Whitt et al. 2022.
    The forcing, boundary conditions, and initial conditions data are archived in `data_les.tar`.
