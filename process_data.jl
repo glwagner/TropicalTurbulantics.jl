@@ -16,11 +16,11 @@
 #
 #    More precisely, is the equation of state:
 #
-#    b = g (α ∂z T + β ∂z S)
+#    b ∼ α T + β S
 #
 #    or 
 #
-#    b = g (α ∂z T - β ∂z S)
+#    b ∼ α T - β S
 #
 # 3. It seems the only "problem" cells are the bottommost -- true? (Why?)
 
@@ -152,29 +152,31 @@ hmV = heatmap!(axV, time_hours, z, permutedims(V), colormap=:balance, colorrange
 hmT = heatmap!(axT, time_hours, z, permutedims(T), colormap=:thermal, colorrange=(20, 26.1))
 hmS = heatmap!(axS, time_hours, z, permutedims(S), colormap=:haline, colorrange=(34.9, 35.3))
 
-Colorbar(fig[1, 0], hmU, vertical=false, label="Zonal velocity (m s⁻¹)")
-Colorbar(fig[1, 3], hmV, vertical=false, label="Meridional velocity (m s⁻¹)")
-Colorbar(fig[3, 0], hmT, vertical=false, label="Temperature (ᵒC)")
-Colorbar(fig[3, 3], hmS, vertical=false, label="Salinity (g kg⁻¹)")
+Colorbar(fig[1, 0], hmU, vertical=true, flipaxis=false, label="Zonal velocity (m s⁻¹)")
+Colorbar(fig[1, 3], hmV, vertical=true, label="Meridional velocity (m s⁻¹)")
+Colorbar(fig[3, 0], hmT, vertical=true, flipaxis=false, label="Temperature (ᵒC)")
+Colorbar(fig[3, 3], hmS, vertical=true, label="Salinity (g kg⁻¹)")
 
 axQU = Axis(fig[2, 1], xlabel="Time (hrs)", ylabel="Zonal momentum flux (m² s⁻²)")
 axQV = Axis(fig[2, 2], xlabel="Time (hrs)", ylabel="Meridional momentum flux (m² s⁻²)")
 axQT = Axis(fig[4, 1], xlabel="Time (hrs)", ylabel="Temperature flux (m² s⁻²)")
 axQS = Axis(fig[4, 2], xlabel="Time (hrs)", ylabel="Salt flux (m² s⁻²)")
 
-lines!(axQU, time_hours, Qᵁ_surface)
-lines!(axQV, time_hours, Qⱽ_surface)
-lines!(axQT, time_hours, Qᵀ_surface)
-lines!(axQS, time_hours, Qˢ_surface)
+lines!(axQU, time_hours, Qᵁ_surface, label="surface")
+lines!(axQV, time_hours, Qⱽ_surface, label="surface")
+lines!(axQT, time_hours, Qᵀ_surface, label="surface")
+lines!(axQS, time_hours, Qˢ_surface, label="surface")
 
-lines!(axQU, time_hours, Qᵁ_bottom)
-lines!(axQV, time_hours, Qⱽ_bottom)
-lines!(axQT, time_hours, Qᵀ_bottom)
-lines!(axQS, time_hours, Qˢ_bottom)
+lines!(axQU, time_hours, Qᵁ_bottom, label="bottom")
+lines!(axQV, time_hours, Qⱽ_bottom, label="bottom")
+lines!(axQT, time_hours, Qᵀ_bottom, label="bottom")
+lines!(axQS, time_hours, Qˢ_bottom, label="bottom")
+
+axislegend(axQU)
 
 axI = Axis(fig[5, 1], xlabel="Time (hrs)", ylabel="z (m)")
 hmI = heatmap!(axI, time_hours, z, permutedims(Fᴵ), colorrange=(0, 1e-5))
-Colorbar(fig[5, 0], hmI, vertical=false, label="Solar insolation temperature flux divergence (ᵒC m s⁻¹)")
+Colorbar(fig[5, 0], hmI, vertical=true, flipaxis=false, label="Solar insolation temperature flux divergence (ᵒC m s⁻¹)")
 
 display(fig)
 
