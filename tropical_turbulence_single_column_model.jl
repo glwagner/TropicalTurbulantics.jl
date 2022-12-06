@@ -9,10 +9,10 @@ using Oceananigans.TurbulenceClosures.CATKEVerticalDiffusivities:
 include("tropical_turbulence_setup.jl")
 
 arch = CPU()
-setup = tropical_turbulence_setup(arch)
+Nz = 27
+setup = tropical_turbulence_setup(arch; Nz)
 
-Nz = length(setup.z) - 1
-Lh = 216
+#Nz = length(setup.z) - 1
 grid = RectilinearGrid(arch,
                        size = Nz,
                        z = setup.z,
@@ -57,23 +57,24 @@ set!(model; e=1e-9, setup.initial_conditions...)
 ##### + callback to update the forcing time index every iteration
 #####
 
-simulation = Simulation(model, Δt=10.0, stop_time=1day)
+simulation = Simulation(model, Δt=1minute, stop_time=1day)
 
 simulation.callbacks[:update_time_index] = setup.update_time_index
 
 function progress(sim)
     u, v, w = sim.model.velocities
+    e = sim.model.tracers.e
 
-    msg = @sprintf("Iter: %d, time: %s, forcing time index: %d, max|u|: (%.2e, %.2e, %.2e)",
+    msg = @sprintf("Iter: %d, time: %s, forcing time index: %d, max|u|: (%.2e, %.2e), max e: %.2e",
                    iteration(sim), prettytime(sim), setup.forcing_time_index[],
-                   maximum(abs, u), maximum(abs, v), maximum(abs, w))
+                   maximum(abs, u), maximum(abs, v), maximum(abs, e))
                    
     @info msg
 
     return nothing
 end
 
-simulation.callbacks[:progress] = Callback(progress, IterationInterval(1))
+simulation.callbacks[:progress] = Callback(progress, IterationInterval(10))
 
 run!(simulation)
 

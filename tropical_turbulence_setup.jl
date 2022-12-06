@@ -47,18 +47,22 @@ end
 end
 
 """
-    tropical_turbulence_setup(arch; datapath = "forcing_and_ics_0N140W.jld2")
+    tropical_turbulence_setup(arch; Nz=216, datapath = "forcing_and_ics_0N140W.jld2")
 
 Return a setup for simulating tropical deep cycle turbulence.
 """
 function tropical_turbulence_setup(arch = CPU();
+                                   z = nothing,
+                                   Nz = 216,
                                    datapath = "forcing_and_ics_0N140W.jld2")
                                      
 
     # Load data
     file = jldopen(datapath)
 
-    # Grid
+    # Load the "original" z-grid for Whitt et al. 2022.
+    user_z = z # save the user spec
+
     z = file["z"]
 
     # Add one more cell interface at z = -108 meters.
@@ -71,6 +75,7 @@ function tropical_turbulence_setup(arch = CPU();
     z = vcat(-108, z)
 
     @info string("First cell interface is now z[1] = ", z[1])
+    @assert length(z) == 217
 
     # Forcing time
     forcing_times = file["time_seconds"]
@@ -82,11 +87,21 @@ function tropical_turbulence_setup(arch = CPU();
     T = file["T"]
     S = file["S"]
 
+    # Thermodynamic properties
+    # Linear equation of state:
+    #
+    #   (ρ - ρᵣ) / ρᵣ ∼ α T - β S
+    #
+    # where α=thermal_expansion and β=haline_contraction
+    thermal_expansion = file["thermal_expansion"]
+    haline_contraction = file["haline_contraction"]
+
     # Large-scale tendency forcing + solar insolation
     Fᵁ = file["Fᵁ"]
     Fⱽ = file["Fⱽ"]
-    Fᵀ = file["Fᵀ"]
-    Fᴵ = file["Fᴵ"]
+
+    # Note: combine ROMS tendency + insolution
+    Fᵀ = file["Fᵀ"] .+ file["Fᴵ"]
 
     # Surface fluxes
     Qᵁ_surface = file["Qᵁ_surface"]
@@ -100,15 +115,6 @@ function tropical_turbulence_setup(arch = CPU();
     Qᵀ_bottom = file["Qᵀ_bottom"]
     Qˢ_bottom = file["Qˢ_bottom"]
 
-    # Thermodynamic properties
-    # Linear equation of state:
-    #
-    #   (ρ - ρᵣ) / ρᵣ ∼ α T - β S
-    #
-    # where α=thermal_expansion and β=haline_contraction
-    thermal_expansion = file["thermal_expansion"]
-    haline_contraction = file["haline_contraction"]
-
     close(file)
 
     equation_of_state = LinearEquationOfState(; thermal_expansion, haline_contraction)
@@ -118,9 +124,10 @@ function tropical_turbulence_setup(arch = CPU();
     ##### Set up forcing
     #####
 
+    # Callback that updates the forcing time index.
+    # This callback runs on the CPU.
     forcing_time_index = n = Ref(1)
 
-    # Callback to add to Simulation
     function update_time_index_func(sim)
         n = findfirst(t -> t > time(simulation), forcing_times)
 
@@ -133,14 +140,57 @@ function tropical_turbulence_setup(arch = CPU();
         return nothing
     end
 
+    # regrid if necessary
+    if Nz != 216 || !isnothing(user_z)
+        if isnothing(user_z)
+            user_z = (-108, 0)
+        else
+            Nz = length(user_z) - 1
+        end
+
+        original_vertical_grid = RectilinearGrid(size=216; z, topology=(Flat, Flat, Bounded))
+        new_vertical_grid      = RectilinearGrid(size=Nz; z=user_z, topology=(Flat, Flat, Bounded))
+
+        orig_field = CenterField(original_vertical_grid)
+        new_field = CenterField(new_vertical_grid)
+
+        Nt = length(forcing_times)
+        new_Fᵁ = zeros(Nz, Nt)
+        new_Fⱽ = zeros(Nz, Nt)
+        new_Fᵀ = zeros(Nz, Nt)
+        new_U = zeros(Nz, Nt)
+        new_V = zeros(Nz, Nt)
+        new_T = zeros(Nz, Nt)
+        new_S = zeros(Nz, Nt)
+
+        for (new, orig) in [(new_Fᵁ, Fᵁ),
+                            (new_Fⱽ, Fⱽ),
+                            (new_Fᵀ, Fᵀ),
+                            (new_U,  U),
+                            (new_V,  V),
+                            (new_T,  T),
+                            (new_S,  S)]
+
+            for n = 1:Nt
+                orig_field .= reshape(orig[:, n], 1, 1, 216)
+                regrid!(new_field, orig_field)
+                new[:, n] .= interior(new_field, :)
+            end
+        end
+
+        # Just pretend nothing happened
+        Fᵁ = new_Fᵁ
+        Fⱽ = new_Fⱽ 
+        Fᵀ = new_Fᵀ
+        U  = new_U  
+        V  = new_V  
+        T  = new_T  
+        S  = new_S  
+        z  = znodes(Face, new_vertical_grid)
+    end
+
     # Convert CPU arrays to GPU arrays if necessary:
     tᶠ = arch_array(arch, forcing_times)
-
-    Fᵁ = arch_array(arch, Fᵁ)
-    Fⱽ = arch_array(arch, Fⱽ)
-
-    # Note: combine ROMS tendency + insolution
-    Fᵀ = arch_array(arch, Fᵀ .+ Fᴵ)
 
     Qᵁ_surface = arch_array(arch, Qᵁ_surface)
     Qⱽ_surface = arch_array(arch, Qⱽ_surface)
@@ -151,6 +201,12 @@ function tropical_turbulence_setup(arch = CPU();
     Qᵀ_bottom  = arch_array(arch, Qᵀ_bottom)
     Qˢ_bottom  = arch_array(arch, Qˢ_bottom)
 
+    Fᵁ = arch_array(arch, Fᵁ)
+    Fⱽ = arch_array(arch, Fⱽ)
+
+    # Note: combine ROMS tendency + insolution
+    Fᵀ = arch_array(arch, Fᵀ)
+    
     u_forcing = Forcing(interp_forcing, discrete_form=true, parameters=(n, tᶠ, Fᵁ))
     v_forcing = Forcing(interp_forcing, discrete_form=true, parameters=(n, tᶠ, Fⱽ))
     T_forcing = Forcing(interp_forcing, discrete_form=true, parameters=(n, tᶠ, Fᵀ))
@@ -177,7 +233,6 @@ function tropical_turbulence_setup(arch = CPU();
     boundary_conditions = (u=u_bcs, v=v_bcs, T=T_bcs, S=S_bcs)
     update_time_index = Callback(update_time_index_func)
 
-    Nz = length(z) - 1
     Uᵢ = reshape(U[:, 1], 1, 1, Nz)
     Vᵢ = reshape(V[:, 1], 1, 1, Nz)
     Tᵢ = reshape(T[:, 1], 1, 1, Nz)
