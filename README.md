@@ -37,6 +37,7 @@ The resulting plot should look like this:
 julia --project tropical_turbulence_single_column_model.jl
 ```
 
+The simulation takes 4-5 minutes on an M1 MacBook pro with 1 thread.
 After the simulation is run, the results may be plotted with
 
 
@@ -44,4 +45,8 @@ After the simulation is run, the results may be plotted with
 julia --project plot_single_column_simulation.jl
 ```
 
+The result should look something like
+
+
+![tropical_turbulence_single_column_simulation](https://user-images.githubusercontent.com/15271942/205989494-4d3ed378-d238-418f-b459-1eafa13cfe06.png)
 
