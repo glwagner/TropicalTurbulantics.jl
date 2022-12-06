@@ -31,9 +31,22 @@ The resulting plot should look like this:
 
 ![forcing_and_bcs_and_ics_0N140W](https://user-images.githubusercontent.com/15271942/205972330-ec682744-6d2b-46a4-95b2-65df86182f60.png)
 
-## Running the large eddy simulation
+## Running and analyzing the single column model
 
 ```julia
-julia --project equatorial_turbulence_simulation.jl
+julia --project tropical_turbulence_single_column_model.jl
 ```
+
+The simulation takes 4-5 minutes on an M1 MacBook pro with 1 thread.
+After the simulation is run, the results may be plotted with
+
+
+```julia
+julia --project plot_single_column_simulation.jl
+```
+
+The result should look something like
+
+
+![tropical_turbulence_single_column_simulation](https://user-images.githubusercontent.com/15271942/205989494-4d3ed378-d238-418f-b459-1eafa13cfe06.png)
 
