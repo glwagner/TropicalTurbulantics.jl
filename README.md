@@ -48,5 +48,5 @@ julia --project plot_single_column_simulation.jl
 The result should look something like
 
 
-![tropical_turbulence_single_column_simulation](https://user-images.githubusercontent.com/15271942/205989494-4d3ed378-d238-418f-b459-1eafa13cfe06.png)
+![tropical_turbulence_single_column_simulation](https://github.com/glwagner/TropicalTurbulantics.jl/blob/main/tropical_turbulence_single_column_simulation.png)
 
