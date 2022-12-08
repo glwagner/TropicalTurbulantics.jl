@@ -1,7 +1,7 @@
 using GLMakie
 using Oceananigans
 
-filename = "tropical_turbulence_single_column_model.jld2"
+filename = "tropical_turbulence_single_column_model_Nz54.jld2"
 
 ut = FieldTimeSeries(filename, "u")
 vt = FieldTimeSeries(filename, "v")
@@ -34,10 +34,10 @@ ax_S = Axis(fig[2, 2], xlabel="Time (days)", ylabel="z (m)")
 ax_e = Axis(fig[3, 1], xlabel="Time (days)", ylabel="z (m)")
 ax_R = Axis(fig[3, 2], xlabel="Time (days)", ylabel="z (m)")
 
-hm_u = heatmap!(ax_u, t ./ days, z, permutedims(u), colormap=:balance, colorrange=(-ulim, ulim))
-hm_v = heatmap!(ax_v, t ./ days, z, permutedims(v), colormap=:balance, colorrange=(-ulim, ulim))
-hm_T = heatmap!(ax_T, t ./ days, z, permutedims(T), colormap=:thermal)
-hm_S = heatmap!(ax_S, t ./ days, z, permutedims(S), colormap=:haline)
+hm_u = heatmap!(ax_u, t ./ days, z, permutedims(u), colormap=:balance, colorrange=(-1, 1))
+hm_v = heatmap!(ax_v, t ./ days, z, permutedims(v), colormap=:balance, colorrange=(-1, 1))
+hm_T = heatmap!(ax_T, t ./ days, z, permutedims(T), colormap=:thermal, colorrange=(20, 26.1))
+hm_S = heatmap!(ax_S, t ./ days, z, permutedims(S), colormap=:haline, colorrange=(34.9, 35.3))
 hm_e = heatmap!(ax_e, t ./ days, z, permutedims(e), colormap=:solar, colorrange=(0, 1e-4))
 hm_R = heatmap!(ax_R, t ./ days, z_Ri, permutedims(Ri⁻¹), colorrange=(0, 5))
 

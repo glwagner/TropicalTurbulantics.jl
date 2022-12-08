@@ -1,4 +1,5 @@
 using Oceananigans
+using Oceananigans.Units
 using Printf
 
 using Oceananigans.TurbulenceClosures.CATKEVerticalDiffusivities:
@@ -9,15 +10,13 @@ using Oceananigans.TurbulenceClosures.CATKEVerticalDiffusivities:
 include("tropical_turbulence_setup.jl")
 
 arch = CPU()
-Nz = 27
+Nz = 54
 setup = tropical_turbulence_setup(arch; Nz)
 
-#Nz = length(setup.z) - 1
 grid = RectilinearGrid(arch,
                        size = Nz,
                        z = setup.z,
                        topology = (Flat, Flat, Bounded))
-
 
 turbulent_kinetic_energy_equation = TurbulentKineticEnergyEquation(CᵂwΔ = 2.858323560177654,
                                                                    Cᵂu★ = 6.429661459350047,
@@ -57,7 +56,8 @@ set!(model; e=1e-9, setup.initial_conditions...)
 ##### + callback to update the forcing time index every iteration
 #####
 
-simulation = Simulation(model, Δt=1minute, stop_time=33days)
+stop_time = 34days
+simulation = Simulation(model; Δt=1minute, stop_time)
 
 simulation.callbacks[:update_time_index] = setup.update_time_index
 
@@ -81,10 +81,11 @@ b = Oceananigans.BuoyancyModels.buoyancy(model)
 
 Ri = ∂z(b) / (∂z(u)^2 + ∂z(v)^2)
 outputs = merge(model.velocities, model.tracers, (; Ri, b)) 
+filename = string("tropical_turbulence_single_column_model_Nz", Nz, ".jld2")
 
 simulation.output_writers[:jld2] = JLD2OutputWriter(model, outputs,
-                                                    schedule = TimeInterval(20minutes),
-                                                    filename = "tropical_turbulence_single_column_model.jld2",
+                                                    schedule = TimeInterval(20minutes);
+                                                    filename,
                                                     overwrite_existing = true)
 
 run!(simulation)

@@ -7,15 +7,15 @@
 #
 # Notes:
 #
-# 1. The variable "z" extends from 0 to 107.5 m, so we add the "bottom" interface at 108m.
-#
-# 3. It seems the only "problem" cells are the bottommost -- true? (Why?)
+# * The variable "z" extends from 0 to 107.5 m, so we add the "bottom" interface at 108m.
+# * The bottommost cells in the ROMS data and forcing data are problematic, so we overwrite.
 
 using NCDatasets
 using GLMakie
 using Oceananigans.Units
 using JLD2
 using Dates
+using Printf
 
 function average_out!(Q, badvalue=0)
     for n = 1:length(Q)
@@ -83,12 +83,12 @@ Fᴵ[216, :] .= Fᴵ[215, :]
 ρᵣ = dataset["rho0"]
 
 Qᵁ_bottom = - dataset["nududzbot"][:]
-Qⱽ_bottom = - dataset["nududzbot"][:]
+Qⱽ_bottom = - dataset["nudvdzbot"][:]
 Qᵀ_bottom = - dataset["kappadsdzbot"][:]
 Qˢ_bottom = - dataset["kappadtdzbot"][:]
 
 Qᵁ_surface = - dataset["nududztop"][:]
-Qⱽ_surface = - dataset["nududztop"][:]
+Qⱽ_surface = - dataset["nudvdztop"][:]
 Qᵀ_surface = - dataset["kappadsdztop"][:]
 Qˢ_surface = - dataset["kappadtdztop"][:]
 
