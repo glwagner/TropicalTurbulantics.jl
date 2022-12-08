@@ -29,7 +29,7 @@ julia --project process_data.jl
 
 The resulting plot should look like this:
 
-![forcing_and_bcs_and_ics_0N140W](https://user-images.githubusercontent.com/15271942/205972330-ec682744-6d2b-46a4-95b2-65df86182f60.png)
+![forcing_and_bcs_and_ics_0N140W](https://github.com/glwagner/TropicalTurbulantics.jl/blob/main/forcing_and_bcs_and_ics_0N140W.png)
 
 ## Running and analyzing the single column model
 
