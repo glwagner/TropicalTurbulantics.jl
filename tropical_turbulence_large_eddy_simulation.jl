@@ -6,11 +6,13 @@ using Oceanostics.TKEBudgetTerms: TurbulentKineticEnergy
 include("tropical_turbulence_setup.jl")
 
 arch = GPU()
-Nz = 216
-Lh = 306
-Nh = 360
+Nz = 128
+Nh = 128
+Lh = 256 #306
 
 setup = tropical_turbulence_setup(arch; Nz)
+
+@show setup.z[1]
 
 grid = RectilinearGrid(arch,
                        size = (Nh, Nh, Nz),
@@ -20,7 +22,7 @@ grid = RectilinearGrid(arch,
                        topology = (Periodic, Periodic, Bounded))
 
 model = NonhydrostaticModel(; grid,
-                            advection = WENO(),
+                            advection = WENO(order=9),
                             timestepper = :RungeKutta3,
                             tracers = (:T, :S),
                             buoyancy = setup.buoyancy,
