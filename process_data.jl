@@ -82,53 +82,53 @@ Fᴵ[216, :] .= Fᴵ[215, :]
 
 ρᵣ = dataset["rho0"]
 
-Qᵁ_bottom = - dataset["nududzbot"][:]
-Qⱽ_bottom = - dataset["nudvdzbot"][:]
-Qᵀ_bottom = - dataset["kappadsdzbot"][:]
-Qˢ_bottom = - dataset["kappadtdzbot"][:]
+Jᵁ_bottom = - dataset["nududzbot"][:]
+Jⱽ_bottom = - dataset["nudvdzbot"][:]
+Jᵀ_bottom = - dataset["kappadsdzbot"][:]
+Jˢ_bottom = - dataset["kappadtdzbot"][:]
 
-Qᵁ_surface = - dataset["nududztop"][:]
-Qⱽ_surface = - dataset["nudvdztop"][:]
-Qᵀ_surface = - dataset["kappadsdztop"][:]
-Qˢ_surface = - dataset["kappadtdztop"][:]
+Jᵁ_surface = - dataset["nududztop"][:]
+Jⱽ_surface = - dataset["nudvdztop"][:]
+Jᵀ_surface = - dataset["kappadsdztop"][:]
+Jˢ_surface = - dataset["kappadtdztop"][:]
 
 # Fix first value
-Qᵁ_surface[1] = Qᵁ_surface[2]
-Qⱽ_surface[1] = Qⱽ_surface[2]
-Qᵀ_surface[1] = Qᵀ_surface[2]
-Qˢ_surface[1] = Qˢ_surface[2]
+Jᵁ_surface[1] = Jᵁ_surface[2]
+Jⱽ_surface[1] = Jⱽ_surface[2]
+Jᵀ_surface[1] = Jᵀ_surface[2]
+Jˢ_surface[1] = Jˢ_surface[2]
 
-for Q in [Qᵁ_bottom, 
-          Qⱽ_bottom, 
-          Qᵀ_bottom, 
-          Qˢ_bottom, 
-          Qᵁ_surface, 
-          Qⱽ_surface,
-          Qᵀ_surface,
-          Qˢ_surface]
+for Q in [Jᵁ_bottom, 
+          Jⱽ_bottom, 
+          Jᵀ_bottom, 
+          Jˢ_bottom, 
+          Jᵁ_surface, 
+          Jⱽ_surface,
+          Jᵀ_surface,
+          Jˢ_surface]
 
     average_out!(Q, 0)
 end
 
-@printf("extrema(Qᵁ_surface) = (%.2e, %.2e) \n", extrema(Qᵁ_surface)...) 
-@printf("extrema(Qⱽ_surface) = (%.2e, %.2e) \n", extrema(Qⱽ_surface)...)
-@printf("extrema(Qᵀ_surface) = (%.2e, %.2e) \n", extrema(Qᵀ_surface)...)
-@printf("extrema(Qˢ_surface) = (%.2e, %.2e) \n", extrema(Qˢ_surface)...)
+@printf("extrema(Jᵁ_surface) = (%.2e, %.2e) \n", extrema(Jᵁ_surface)...) 
+@printf("extrema(Jⱽ_surface) = (%.2e, %.2e) \n", extrema(Jⱽ_surface)...)
+@printf("extrema(Jᵀ_surface) = (%.2e, %.2e) \n", extrema(Jᵀ_surface)...)
+@printf("extrema(Jˢ_surface) = (%.2e, %.2e) \n", extrema(Jˢ_surface)...)
 
-@printf("extrema(Qᵁ_bottom) = (%.2e, %.2e) \n", extrema(Qᵁ_bottom)...) 
-@printf("extrema(Qⱽ_bottom) = (%.2e, %.2e) \n", extrema(Qⱽ_bottom)...)
-@printf("extrema(Qᵀ_bottom) = (%.2e, %.2e) \n", extrema(Qᵀ_bottom)...)
-@printf("extrema(Qˢ_bottom) = (%.2e, %.2e) \n", extrema(Qˢ_bottom)...)
+@printf("extrema(Jᵁ_bottom) = (%.2e, %.2e) \n", extrema(Jᵁ_bottom)...) 
+@printf("extrema(Jⱽ_bottom) = (%.2e, %.2e) \n", extrema(Jⱽ_bottom)...)
+@printf("extrema(Jᵀ_bottom) = (%.2e, %.2e) \n", extrema(Jᵀ_bottom)...)
+@printf("extrema(Jˢ_bottom) = (%.2e, %.2e) \n", extrema(Jˢ_bottom)...)
 
-thermal_expansion = dataset["alpha"][:]
+thermal_expansion = first(dataset["alpha"][:])
 
 # Note sign convention
-haline_contraction = - dataset["beta"][:]
+haline_contraction = - first(dataset["beta"][:])
 
 @printf("thermal expansion = %.2e \n", thermal_expansion)
 @printf("haline contraction = %.2e \n", haline_contraction)
 
-fig = Figure(resolution=(1600, 1600))
+fig = Figure(size=(1600, 1600))
 
 axU = Axis(fig[1, 1], xlabel="Time (hr)", ylabel="z (m)")
 axV = Axis(fig[1, 2], xlabel="Time (hr)", ylabel="z (m)")
@@ -145,22 +145,22 @@ Colorbar(fig[1, 3], hmV, vertical=true, label="Meridional velocity (m s⁻¹)")
 Colorbar(fig[3, 0], hmT, vertical=true, flipaxis=false, label="Temperature (ᵒC)")
 Colorbar(fig[3, 3], hmS, vertical=true, label="Salinity (g kg⁻¹)")
 
-axQU = Axis(fig[2, 1], xlabel="Time (hrs)", ylabel="Zonal momentum flux (m² s⁻²)")
-axQV = Axis(fig[2, 2], xlabel="Time (hrs)", ylabel="Meridional momentum flux (m² s⁻²)")
-axQT = Axis(fig[4, 1], xlabel="Time (hrs)", ylabel="Temperature flux (m² s⁻²)")
-axQS = Axis(fig[4, 2], xlabel="Time (hrs)", ylabel="Salt flux (m² s⁻²)")
+axJU = Axis(fig[2, 1], xlabel="Time (hrs)", ylabel="Zonal momentum flux (m² s⁻²)")
+axJV = Axis(fig[2, 2], xlabel="Time (hrs)", ylabel="Meridional momentum flux (m² s⁻²)")
+axJT = Axis(fig[4, 1], xlabel="Time (hrs)", ylabel="Temperature flux (m² s⁻²)")
+axJS = Axis(fig[4, 2], xlabel="Time (hrs)", ylabel="Salt flux (m² s⁻²)")
 
-lines!(axQU, time_hours, Qᵁ_surface, label="surface")
-lines!(axQV, time_hours, Qⱽ_surface, label="surface")
-lines!(axQT, time_hours, Qᵀ_surface, label="surface")
-lines!(axQS, time_hours, Qˢ_surface, label="surface")
+lines!(axJU, time_hours, Jᵁ_surface, label="surface")
+lines!(axJV, time_hours, Jⱽ_surface, label="surface")
+lines!(axJT, time_hours, Jᵀ_surface, label="surface")
+lines!(axJS, time_hours, Jˢ_surface, label="surface")
 
-lines!(axQU, time_hours, Qᵁ_bottom, label="bottom")
-lines!(axQV, time_hours, Qⱽ_bottom, label="bottom")
-lines!(axQT, time_hours, Qᵀ_bottom, label="bottom")
-lines!(axQS, time_hours, Qˢ_bottom, label="bottom")
+lines!(axJU, time_hours, Jᵁ_bottom, label="bottom")
+lines!(axJV, time_hours, Jⱽ_bottom, label="bottom")
+lines!(axJT, time_hours, Jᵀ_bottom, label="bottom")
+lines!(axJS, time_hours, Jˢ_bottom, label="bottom")
 
-axislegend(axQU)
+axislegend(axJU)
 
 axI = Axis(fig[5, 1], xlabel="Time (hrs)", ylabel="z (m)")
 hmI = heatmap!(axI, time_hours, z, permutedims(Fᴵ), colorrange=(0, 1e-5))
@@ -189,15 +189,15 @@ file["V"] = V
 file["T"] = T
 file["S"] = S
 
-file["Qᵁ_surface"] = Qᵁ_surface
-file["Qⱽ_surface"] = Qⱽ_surface
-file["Qᵀ_surface"] = Qᵀ_surface
-file["Qˢ_surface"] = Qˢ_surface
+file["Jᵁ_surface"] = Jᵁ_surface
+file["Jⱽ_surface"] = Jⱽ_surface
+file["Jᵀ_surface"] = Jᵀ_surface
+file["Jˢ_surface"] = Jˢ_surface
 
-file["Qᵁ_bottom"] = Qᵁ_bottom
-file["Qⱽ_bottom"] = Qⱽ_bottom
-file["Qᵀ_bottom"] = Qᵀ_bottom
-file["Qˢ_bottom"] = Qˢ_bottom
+file["Jᵁ_bottom"] = Jᵁ_bottom
+file["Jⱽ_bottom"] = Jⱽ_bottom
+file["Jᵀ_bottom"] = Jᵀ_bottom
+file["Jˢ_bottom"] = Jˢ_bottom
 
 file["Fᵁ"] = Fᵁ 
 file["Fⱽ"] = Fⱽ 
