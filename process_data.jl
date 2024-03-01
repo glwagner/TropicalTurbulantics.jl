@@ -67,17 +67,19 @@ S[216, :] .= S[215, :]
 Fᵁ = dataset["dUdtFORCE"][:, :]
 Fⱽ = dataset["dVdtFORCE"][:, :]
 Fᵀ = dataset["dTdtFORCE"][:, :]
-#Fˢ = dataset["dSdtFORCE"]
+Fˢ = dataset["dSdtFORCE"][:, :]
 Fᴵ = dataset["dTdtSOLAR"][:, :]
 
 Fᵁ[216, :] .= Fᵁ[215, :]  
 Fⱽ[216, :] .= Fⱽ[215, :] 
 Fᵀ[216, :] .= Fᵀ[215, :] 
+Fˢ[216, :] .= Fˢ[215, :] 
 Fᴵ[216, :] .= Fᴵ[215, :] 
 
 @printf("extrema(Fᵁ) = (%.2e, %.2e) \n", extrema(Fᵁ)...) 
 @printf("extrema(Fⱽ) = (%.2e, %.2e) \n", extrema(Fⱽ)...)
 @printf("extrema(Fᵀ) = (%.2e, %.2e) \n", extrema(Fᵀ)...)
+@printf("extrema(Fˢ) = (%.2e, %.2e) \n", extrema(Fˢ)...)
 @printf("extrema(Fᴵ) = (%.2e, %.2e) \n", extrema(Fᴵ)...)
 
 ρᵣ = dataset["rho0"]

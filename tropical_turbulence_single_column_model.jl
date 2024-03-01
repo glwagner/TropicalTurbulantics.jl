@@ -10,44 +10,24 @@ using Oceananigans.TurbulenceClosures.CATKEVerticalDiffusivities:
 include("tropical_turbulence_setup.jl")
 
 arch = CPU()
-Nz = 54
-setup = tropical_turbulence_setup(arch; Nz)
+hi_res_setup = tropical_turbulence_setup(arch; Nz=216)
+z = hi_res_setup.z[1:8:end]
+Nz = length(z) - 1
+setup = tropical_turbulence_setup(arch; Nz, z)
 
 grid = RectilinearGrid(arch,
                        size = Nz,
                        z = setup.z,
                        topology = (Flat, Flat, Bounded))
 
-turbulent_kinetic_energy_equation = TurbulentKineticEnergyEquation(CᵂwΔ = 2.858323560177654,
-                                                                   Cᵂu★ = 6.429661459350047,
-                                                                   C⁺D  = 0.6332855351727852,
-                                                                   C⁻D  = 0.776966635028129,
-                                                                   CᶜD  = 3.031920275020819,
-                                                                   CᵉD  = 0.04035710595894642)
-
-mixing_length = MixingLength(C⁺c  = 0.13681143163095005,
-                             C⁺u  = 0.2635185903882231,
-                             C⁺e  = 9.82562434662029,
-                             Cᵇ   = 0.8322522991885453,
-                             C⁻c  = 0.4175147980679791,
-                             C⁻u  = 0.49250780910121605,
-                             C⁻e  = 7.410282104867351,
-                             CRiᶜ = 0.4933951366483328,
-                             CRiʷ = 0.400084096820722,
-                             Cᶜc  = 8.23976241523068,
-                             Cᶜe  = 3.695385457245675,
-                             Cᵉc  = 0.4685456558627356,
-                             Cᵉe  = 1.8793640062659647,
-                             Cˢᶜ  = 0.19659617642661853)
-
-optimal_catke = CATKEVerticalDiffusivity(; turbulent_kinetic_energy_equation, mixing_length)
+default_catke = CATKEVerticalDiffusivity()
 
 model = HydrostaticFreeSurfaceModel(; grid,
                                     tracers = (:T, :S, :e),
                                     buoyancy = setup.buoyancy,
                                     forcing = setup.forcing,
                                     boundary_conditions = setup.boundary_conditions,
-                                    closure = optimal_catke)
+                                    closure = default_catke)
 
 set!(model; e=1e-9, setup.initial_conditions...)
 
@@ -57,7 +37,7 @@ set!(model; e=1e-9, setup.initial_conditions...)
 #####
 
 stop_time = 34days
-simulation = Simulation(model; Δt=1minute, stop_time)
+simulation = Simulation(model; Δt=10minute, stop_time)
 
 simulation.callbacks[:update_time_index] = setup.update_time_index
 

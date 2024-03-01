@@ -1,7 +1,8 @@
-using GLMakie
 using Oceananigans
+using Oceananigans.Units
+using GLMakie
 
-filename = "tropical_turbulence_single_column_model_Nz54.jld2"
+filename = "tropical_turbulence_single_column_model_Nz108.jld2"
 
 ut = FieldTimeSeries(filename, "u")
 vt = FieldTimeSeries(filename, "v")
@@ -25,7 +26,7 @@ Ri⁻¹ = 1 ./ interior(Rit, 1, 1, :, :)
 umax = max(maximum(abs, u), maximum(abs, v))
 ulim = 3umax / 4
 
-fig = Figure(resolution=(2400, 1200))
+fig = Figure(size=(2000, 1000))
 
 ax_u = Axis(fig[1, 1], xlabel="Time (days)", ylabel="z (m)")
 ax_v = Axis(fig[1, 2], xlabel="Time (days)", ylabel="z (m)")
