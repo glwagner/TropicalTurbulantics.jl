@@ -6,18 +6,23 @@ using Oceanostics.TKEBudgetTerms: TurbulentKineticEnergy
 include("tropical_turbulence_setup.jl")
 
 arch = GPU()
-Nz = 128
+Nz = 96
 Nh = 128
 Lh = 256 #306
 
-setup = tropical_turbulence_setup(arch; Nz)
+hi_res_setup = tropical_turbulence_setup(arch; Nz=216)
+
+z = hi_res_setup.z[1:2:end]
+Nz = length(z) - 1
+setup = tropical_turbulence_setup(arch; Nz, z)
 
 @show setup.z[1]
 
 grid = RectilinearGrid(arch,
                        size = (Nh, Nh, Nz),
-                       x = (0, Nh),
-                       y = (0, Nh),
+                       halo = (7, 7, 7),
+                       x = (0, Lh),
+                       y = (0, Lh),
                        z = setup.z,
                        topology = (Periodic, Periodic, Bounded))
 
@@ -27,12 +32,11 @@ model = NonhydrostaticModel(; grid,
                             tracers = (:T, :S),
                             buoyancy = setup.buoyancy,
                             forcing = setup.forcing,
-                            boundary_conditions = setup.boundary_conditions,
-                            closure = AnisotropicMinimumDissipation())
+                            boundary_conditions = setup.boundary_conditions)
 
 set!(model; setup.initial_conditions...)
 
-# Seed with a random velocity field
+# Additionally seed with a random velocity field
 wᵢ(x, y, z) = 1e-4 * (1 - 2rand())
 set!(model, w=wᵢ)
 
@@ -41,8 +45,7 @@ set!(model, w=wᵢ)
 ##### + callback to update the forcing time index every iteration
 #####
 
-simulation = Simulation(model, Δt=1.0, stop_time=1day)
-
+simulation = Simulation(model, Δt=1.0, stop_time=34days)
 simulation.callbacks[:update_time_index] = setup.update_time_index
 
 wizard = TimeStepWizard(cfl=0.7, max_change=1.1, max_Δt=1minute)
@@ -57,7 +60,9 @@ function progress(sim)
     msg = @sprintf("Iter: %d, time: %s, Δt: %s, wall time: %s, forcing time index: %d, max|u|: (%.2e, %.2e, %.2e)",
                    iteration(sim), prettytime(sim), prettytime(sim.Δt),
                    prettytime(elapsed), setup.forcing_time_index[],
-                   maximum(abs, u), maximum(abs, v), maximum(abs, w))
+                   maximum(abs, interior(u)),
+                   maximum(abs, interior(v)),
+                   maximum(abs, interior(w)))
                    
     @info msg
 

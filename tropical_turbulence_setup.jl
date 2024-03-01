@@ -104,16 +104,16 @@ function tropical_turbulence_setup(arch = CPU();
     Fᵀ = file["Fᵀ"] .+ file["Fᴵ"]
 
     # Surface fluxes
-    Qᵁ_surface = file["Qᵁ_surface"]
-    Qⱽ_surface = file["Qⱽ_surface"]
-    Qᵀ_surface = file["Qᵀ_surface"]
-    Qˢ_surface = file["Qˢ_surface"]
+    Jᵁ_surface = file["Jᵁ_surface"]
+    Jⱽ_surface = file["Jⱽ_surface"]
+    Jᵀ_surface = file["Jᵀ_surface"]
+    Jˢ_surface = file["Jˢ_surface"]
 
     # Bottom fluxes
-    Qᵁ_bottom = file["Qᵁ_bottom"]
-    Qⱽ_bottom = file["Qⱽ_bottom"]
-    Qᵀ_bottom = file["Qᵀ_bottom"]
-    Qˢ_bottom = file["Qˢ_bottom"]
+    Jᵁ_bottom = file["Jᵁ_bottom"]
+    Jⱽ_bottom = file["Jⱽ_bottom"]
+    Jᵀ_bottom = file["Jᵀ_bottom"]
+    Jˢ_bottom = file["Jˢ_bottom"]
 
     close(file)
 
@@ -186,20 +186,20 @@ function tropical_turbulence_setup(arch = CPU();
         V  = new_V  
         T  = new_T  
         S  = new_S  
-        z  = znodes(Face, new_vertical_grid)
+        z  = znodes(new_vertical_grid, Face())
     end
 
     # Convert CPU arrays to GPU arrays if necessary:
     tᶠ = arch_array(arch, forcing_times)
 
-    Qᵁ_surface = arch_array(arch, Qᵁ_surface)
-    Qⱽ_surface = arch_array(arch, Qⱽ_surface)
-    Qᵀ_surface = arch_array(arch, Qᵀ_surface)
-    Qˢ_surface = arch_array(arch, Qˢ_surface)
-    Qᵁ_bottom  = arch_array(arch, Qᵁ_bottom)
-    Qⱽ_bottom  = arch_array(arch, Qⱽ_bottom)
-    Qᵀ_bottom  = arch_array(arch, Qᵀ_bottom)
-    Qˢ_bottom  = arch_array(arch, Qˢ_bottom)
+    Jᵁ_surface = arch_array(arch, Jᵁ_surface)
+    Jⱽ_surface = arch_array(arch, Jⱽ_surface)
+    Jᵀ_surface = arch_array(arch, Jᵀ_surface)
+    Jˢ_surface = arch_array(arch, Jˢ_surface)
+    Jᵁ_bottom  = arch_array(arch, Jᵁ_bottom)
+    Jⱽ_bottom  = arch_array(arch, Jⱽ_bottom)
+    Jᵀ_bottom  = arch_array(arch, Jᵀ_bottom)
+    Jˢ_bottom  = arch_array(arch, Jˢ_bottom)
 
     Fᵁ = arch_array(arch, Fᵁ)
     Fⱽ = arch_array(arch, Fⱽ)
@@ -211,14 +211,14 @@ function tropical_turbulence_setup(arch = CPU();
     v_forcing = Forcing(interp_forcing, discrete_form=true, parameters=(n, tᶠ, Fⱽ))
     T_forcing = Forcing(interp_forcing, discrete_form=true, parameters=(n, tᶠ, Fᵀ))
 
-    u_surface_bc = FluxBoundaryCondition(interp_bc, discrete_form=true, parameters=(n, tᶠ, Qᵁ_surface))
-    v_surface_bc = FluxBoundaryCondition(interp_bc, discrete_form=true, parameters=(n, tᶠ, Qⱽ_surface))
-    T_surface_bc = FluxBoundaryCondition(interp_bc, discrete_form=true, parameters=(n, tᶠ, Qᵀ_surface))
-    S_surface_bc = FluxBoundaryCondition(interp_bc, discrete_form=true, parameters=(n, tᶠ, Qˢ_surface))
-    u_bottom_bc  = FluxBoundaryCondition(interp_bc, discrete_form=true, parameters=(n, tᶠ, Qᵁ_bottom))
-    v_bottom_bc  = FluxBoundaryCondition(interp_bc, discrete_form=true, parameters=(n, tᶠ, Qⱽ_bottom))
-    T_bottom_bc  = FluxBoundaryCondition(interp_bc, discrete_form=true, parameters=(n, tᶠ, Qᵀ_bottom))
-    S_bottom_bc  = FluxBoundaryCondition(interp_bc, discrete_form=true, parameters=(n, tᶠ, Qˢ_bottom))
+    u_surface_bc = FluxBoundaryCondition(interp_bc, discrete_form=true, parameters=(n, tᶠ, Jᵁ_surface))
+    v_surface_bc = FluxBoundaryCondition(interp_bc, discrete_form=true, parameters=(n, tᶠ, Jⱽ_surface))
+    T_surface_bc = FluxBoundaryCondition(interp_bc, discrete_form=true, parameters=(n, tᶠ, Jᵀ_surface))
+    S_surface_bc = FluxBoundaryCondition(interp_bc, discrete_form=true, parameters=(n, tᶠ, Jˢ_surface))
+    u_bottom_bc  = FluxBoundaryCondition(interp_bc, discrete_form=true, parameters=(n, tᶠ, Jᵁ_bottom))
+    v_bottom_bc  = FluxBoundaryCondition(interp_bc, discrete_form=true, parameters=(n, tᶠ, Jⱽ_bottom))
+    T_bottom_bc  = FluxBoundaryCondition(interp_bc, discrete_form=true, parameters=(n, tᶠ, Jᵀ_bottom))
+    S_bottom_bc  = FluxBoundaryCondition(interp_bc, discrete_form=true, parameters=(n, tᶠ, Jˢ_bottom))
 
     u_bcs = FieldBoundaryConditions(top=u_surface_bc) #, bottom=u_bottom_bc)
     v_bcs = FieldBoundaryConditions(top=v_surface_bc) #, bottom=v_bottom_bc)
@@ -226,7 +226,7 @@ function tropical_turbulence_setup(arch = CPU();
     S_bcs = FieldBoundaryConditions(top=S_surface_bc) #, bottom=S_bottom_bc)
 
     #####
-    ##### LES setup with AMD closure and RK3 time-stepping
+    ##### Build setup
     #####
 
     forcing = (u=u_forcing, v=v_forcing, T=T_forcing)
