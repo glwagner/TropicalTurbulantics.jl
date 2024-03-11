@@ -3,9 +3,9 @@ using Oceananigans.Units
 using GLMakie
 
 lesfilename = "tropical_turbulence_Nz108_averages.jld2"
-scmfilename = "tropical_turbulence_single_column_model_Nz108.jld2"
+#scmfilename = "tropical_turbulence_single_column_model_Nz108.jld2"
 #scmfilename = "tropical_turbulence_single_column_model_Nz54.jld2"
-#scmfilename = "tropical_turbulence_single_column_model_Nz27.jld2"
+scmfilename = "tropical_turbulence_single_column_model_Nz27.jld2"
 
 utles = FieldTimeSeries(lesfilename, "u")
 vtles = FieldTimeSeries(lesfilename, "v")
@@ -42,16 +42,16 @@ Tzles = Field{Nothing, Nothing, Face}(lesgrid)
 Nzles = size(uzles, 3)
 
 Uznles = @lift begin
-    uz .= ∂z(utles[$n])
-    vz .= ∂z(vtles[$n])
-    uzi = interior(uz, 1, 1, 2:Nzles-1)
-    vzi = interior(vz, 1, 1, 2:Nzles-1)
+    uzles .= ∂z(utles[$n])
+    vzles .= ∂z(vtles[$n])
+    uzi = interior(uzles, 1, 1, 2:Nzles-1)
+    vzi = interior(vzles, 1, 1, 2:Nzles-1)
     return @. sqrt(uzi^2 + vzi^2)
 end
 
 Tznles = @lift begin
-    Tz .= ∂z(Ttles[$n])
-    return Array(interior(Tz, 1, 1, 2:Nzles-1))
+    Tzles .= ∂z(Ttles[$n])
+    return Array(interior(Tzles, 1, 1, 2:Nzles-1))
 end
 
 scmgrid = utscm.grid
@@ -61,16 +61,16 @@ Tzscm = Field{Nothing, Nothing, Face}(scmgrid)
 Nzscm = size(uzscm, 3)
 
 Uznscm = @lift begin
-    uz .= ∂z(utscm[$n])
-    vz .= ∂z(vtscm[$n])
-    uzi = interior(uz, 1, 1, 2:Nzscm-1)
-    vzi = interior(vz, 1, 1, 2:Nzscm-1)
+    uzscm .= ∂z(utscm[$n])
+    vzscm .= ∂z(vtscm[$n])
+    uzi = interior(uzscm, 1, 1, 2:Nzscm-1)
+    vzi = interior(vzscm, 1, 1, 2:Nzscm-1)
     return @. sqrt(uzi^2 + vzi^2)
 end
 
 Tznscm = @lift begin
-    Tz .= ∂z(Ttscm[$n])
-    return Array(interior(Tz, 1, 1, 2:Nzscm-1))
+    Tzscm .= ∂z(Ttscm[$n])
+    return Array(interior(Tzscm, 1, 1, 2:Nzscm-1))
 end
 
 
@@ -94,7 +94,7 @@ xlims!(ax_Tz, 0, 0.2)
 ax_Rles = Axis(fig[1, 4:6], xlabel="Time (days)", ylabel="z (m)")
 ax_Rscm = Axis(fig[2, 4:6], xlabel="Time (days)", ylabel="z (m)")
 
-t = ut.times
+t = utles.times
 zles = znodes(utles)
 zscm = znodes(utscm)
 zles_Ri = znodes(Rtles)

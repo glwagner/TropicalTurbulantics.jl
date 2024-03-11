@@ -67,32 +67,34 @@ S[216, :] .= S[215, :]
 Fᵁ = dataset["dUdtFORCE"][:, :]
 Fⱽ = dataset["dVdtFORCE"][:, :]
 Fᵀ = dataset["dTdtFORCE"][:, :]
-Fˢ = dataset["dSdtFORCE"][:, :]
 Fᴵ = dataset["dTdtSOLAR"][:, :]
 
 Fᵁ[216, :] .= Fᵁ[215, :]  
 Fⱽ[216, :] .= Fⱽ[215, :] 
 Fᵀ[216, :] .= Fᵀ[215, :] 
-Fˢ[216, :] .= Fˢ[215, :] 
 Fᴵ[216, :] .= Fᴵ[215, :] 
 
 @printf("extrema(Fᵁ) = (%.2e, %.2e) \n", extrema(Fᵁ)...) 
 @printf("extrema(Fⱽ) = (%.2e, %.2e) \n", extrema(Fⱽ)...)
 @printf("extrema(Fᵀ) = (%.2e, %.2e) \n", extrema(Fᵀ)...)
-@printf("extrema(Fˢ) = (%.2e, %.2e) \n", extrema(Fˢ)...)
 @printf("extrema(Fᴵ) = (%.2e, %.2e) \n", extrema(Fᴵ)...)
+
+# Note: Dan's LES data doesn't include dSdtFORCE
+# Fˢ = dataset["dSdtFORCE"][:, :]
+# Fˢ[216, :] .= Fˢ[215, :] 
+# @printf("extrema(Fˢ) = (%.2e, %.2e) \n", extrema(Fˢ)...)
 
 ρᵣ = dataset["rho0"]
 
 Jᵁ_bottom = - dataset["nududzbot"][:]
 Jⱽ_bottom = - dataset["nudvdzbot"][:]
-Jᵀ_bottom = - dataset["kappadsdzbot"][:]
-Jˢ_bottom = - dataset["kappadtdzbot"][:]
+Jᵀ_bottom = - dataset["kappadtdzbot"][:]
+Jˢ_bottom = - dataset["kappadsdzbot"][:]
 
 Jᵁ_surface = - dataset["nududztop"][:]
 Jⱽ_surface = - dataset["nudvdztop"][:]
-Jᵀ_surface = - dataset["kappadsdztop"][:]
-Jˢ_surface = - dataset["kappadtdztop"][:]
+Jᵀ_surface = - dataset["kappadtdztop"][:]
+Jˢ_surface = - dataset["kappadsdztop"][:]
 
 # Fix first value
 Jᵁ_surface[1] = Jᵁ_surface[2]

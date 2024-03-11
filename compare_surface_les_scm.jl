@@ -11,13 +11,14 @@ twhitt = ds["time"][:]
 t0whitt = twhitt[1]
 twhitt_seconds = 1e-3 .* map(t -> Millisecond(t - t0whitt).value, twhitt)
 
-#=
 using Oceananigans
 using Oceananigans.Units
 using GLMakie
 
 lesfilename = "tropical_turbulence_Nz108_averages.jld2"
 scmfilename = "tropical_turbulence_single_column_model_Nz108.jld2"
+#scmfilename = "tropical_turbulence_single_column_model_Nz27.jld2"
+#scmfilename = "tropical_turbulence_single_column_model_Nz216.jld2"
 
 utles = FieldTimeSeries(lesfilename, "u")
 vtles = FieldTimeSeries(lesfilename, "v")
@@ -28,7 +29,6 @@ utscm = FieldTimeSeries(scmfilename, "u")
 vtscm = FieldTimeSeries(scmfilename, "v")
 Ttscm = FieldTimeSeries(scmfilename, "T")
 Stscm = FieldTimeSeries(scmfilename, "S")
-=#
 
 t = utles.times
 

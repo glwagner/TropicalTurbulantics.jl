@@ -11,7 +11,7 @@ include("tropical_turbulence_setup.jl")
 
 arch = CPU()
 hi_res_setup = tropical_turbulence_setup(arch; Nz=216)
-z = hi_res_setup.z[1:8:end]
+z = hi_res_setup.z[1:2:end]
 Nz = length(z) - 1
 setup = tropical_turbulence_setup(arch; Nz, z)
 
@@ -37,7 +37,7 @@ set!(model; e=1e-9, setup.initial_conditions...)
 #####
 
 stop_time = 34days
-simulation = Simulation(model; Δt=10minute, stop_time)
+simulation = Simulation(model; Δt=2minute, stop_time)
 
 simulation.callbacks[:update_time_index] = setup.update_time_index
 
