@@ -2,17 +2,19 @@ using Oceananigans
 using Oceananigans.Units
 using GLMakie
 
-lesfilename = "tropical_turbulence_Nz108_averages.jld2"
-#scmfilename = "tropical_turbulence_single_column_model_Nz108.jld2"
+#lesfilename = "tropical_turbulence_Nz108_averages.jld2"
+lesfilename = "tropical_turbulence_original_les_data.jld2"
+scmfilename = "tropical_turbulence_single_column_model_Nz108.jld2"
 #scmfilename = "tropical_turbulence_single_column_model_Nz54.jld2"
-scmfilename = "tropical_turbulence_single_column_model_Nz27.jld2"
+#scmfilename = "tropical_turbulence_single_column_model_Nz27.jld2"
 
 utles = FieldTimeSeries(lesfilename, "u")
 vtles = FieldTimeSeries(lesfilename, "v")
 Ttles = FieldTimeSeries(lesfilename, "T")
 Stles = FieldTimeSeries(lesfilename, "S")
-etles = FieldTimeSeries(lesfilename, "e")
-Rtles = FieldTimeSeries(lesfilename, "Ri")
+
+#etles = FieldTimeSeries(lesfilename, "e")
+#Rtles = FieldTimeSeries(lesfilename, "Ri")
 
 utscm = FieldTimeSeries(scmfilename, "u")
 vtscm = FieldTimeSeries(scmfilename, "v")
@@ -21,19 +23,22 @@ Stscm = FieldTimeSeries(scmfilename, "S")
 etscm = FieldTimeSeries(scmfilename, "e")
 Rtscm = FieldTimeSeries(scmfilename, "Ri")
 
+Nt = length(utscm)
+
 n = Observable(1)
 unles = @lift interior(utles[$n], 1, 1, :)
 Tnles = @lift interior(Ttles[$n], 1, 1, :)
 Snles = @lift interior(Stles[$n], 1, 1, :)
-enles = @lift interior(etles[$n], 1, 1, :)
+#enles = @lift interior(etles[$n], 1, 1, :)
 
 unscm = @lift interior(utscm[$n], 1, 1, :)
 Tnscm = @lift interior(Ttscm[$n], 1, 1, :)
 Snscm = @lift interior(Stscm[$n], 1, 1, :)
 enscm = @lift interior(etscm[$n], 1, 1, :)
 
-Ri⁻¹les = 1 ./ interior(Rtles, 1, 1, :, :)
-Ri⁻¹scm = 1 ./ interior(Rtscm, 1, 1, :, :)
+#Ri⁻¹les = 1 ./ interior(Rtles, 1, 1, :, 1:Nt)
+Ri⁻¹scm = 1 ./ interior(Rtscm, 1, 1, :, 1:Nt)
+Ri⁻¹les = 0 * Ri⁻¹scm
 
 lesgrid = utles.grid
 uzles = Field{Nothing, Nothing, Face}(lesgrid)
@@ -73,7 +78,6 @@ Tznscm = @lift begin
     return Array(interior(Tzscm, 1, 1, 2:Nzscm-1))
 end
 
-
 fig = Figure(size=(1600, 800))
 
 ax_u = Axis(fig[1, 1], xlabel="u (m s⁻¹)", ylabel="z (m)")
@@ -86,7 +90,7 @@ ax_Tz = Axis(fig[2, 3], xlabel="∂z T (ᵒC m⁻¹)", ylabel="z (m)")
 
 xlims!(ax_u, -2, 2)
 xlims!(ax_T, 21, 31)
-xlims!(ax_S, 32, 35.3)
+xlims!(ax_S, 34.5, 36.0)
 xlims!(ax_e, -1e-5, 5e-4)
 xlims!(ax_uz, 0, 0.1)
 xlims!(ax_Tz, 0, 0.2)
@@ -103,7 +107,7 @@ zscm_Ri = znodes(Rtscm)
 lines!(ax_u, unles, zles, label="LES")
 lines!(ax_T, Tnles, zles, label="LES")
 lines!(ax_S, Snles, zles, label="LES")
-lines!(ax_e, enles, zles, label="LES")
+#lines!(ax_e, enles, zles, label="LES")
 
 lines!(ax_u, unscm, zscm, label="CATKE")
 lines!(ax_T, Tnscm, zscm, label="CATKE")
@@ -137,7 +141,6 @@ Label(fig[0, 1:7], title)
 
 display(fig)
 
-Nt = length(utles)
 record(fig, "tropical_turbulence_catke_les_comparison.mp4", 1:10:Nt, framerate=12) do nn
     @info "Drawing frame $nn of $Nt..."
     n[] = nn

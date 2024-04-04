@@ -1,6 +1,7 @@
 using Oceananigans
 using Oceananigans.Units
 using Printf
+using JLD2
 
 using Oceananigans.TurbulenceClosures.CATKEVerticalDiffusivities:
      CATKEVerticalDiffusivity,
@@ -20,6 +21,7 @@ grid = RectilinearGrid(arch,
                        z = setup.z,
                        topology = (Flat, Flat, Bounded))
 
+@load "optimal_catke.jld2" optimal_catke
 default_catke = CATKEVerticalDiffusivity()
 
 model = HydrostaticFreeSurfaceModel(; grid,
@@ -27,7 +29,7 @@ model = HydrostaticFreeSurfaceModel(; grid,
                                     buoyancy = setup.buoyancy,
                                     forcing = setup.forcing,
                                     boundary_conditions = setup.boundary_conditions,
-                                    closure = default_catke)
+                                    closure = optimal_catke)
 
 set!(model; e=1e-9, setup.initial_conditions...)
 
@@ -61,7 +63,7 @@ b = Oceananigans.BuoyancyModels.buoyancy(model)
 
 Ri = ∂z(b) / (∂z(u)^2 + ∂z(v)^2)
 outputs = merge(model.velocities, model.tracers, (; Ri, b)) 
-filename = string("tropical_turbulence_single_column_model_Nz", Nz, ".jld2")
+@show filename = string("tropical_turbulence_single_column_model_Nz", Nz, ".jld2")
 
 simulation.output_writers[:jld2] = JLD2OutputWriter(model, outputs,
                                                     schedule = TimeInterval(20minutes);

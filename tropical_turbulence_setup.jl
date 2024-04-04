@@ -1,6 +1,6 @@
 using Oceananigans
 using Oceananigans.Units
-using Oceananigans.Architectures: architecture, arch_array
+using Oceananigans.Architectures: architecture, on_architecture
 using SeawaterPolynomials
 using JLD2
 using Printf
@@ -190,22 +190,22 @@ function tropical_turbulence_setup(arch = CPU();
     end
 
     # Convert CPU arrays to GPU arrays if necessary:
-    tᶠ = arch_array(arch, forcing_times)
+    tᶠ = on_architecture(arch, forcing_times)
 
-    Jᵁ_surface = arch_array(arch, Jᵁ_surface)
-    Jⱽ_surface = arch_array(arch, Jⱽ_surface)
-    Jᵀ_surface = arch_array(arch, Jᵀ_surface)
-    Jˢ_surface = arch_array(arch, Jˢ_surface)
-    Jᵁ_bottom  = arch_array(arch, Jᵁ_bottom)
-    Jⱽ_bottom  = arch_array(arch, Jⱽ_bottom)
-    Jᵀ_bottom  = arch_array(arch, Jᵀ_bottom)
-    Jˢ_bottom  = arch_array(arch, Jˢ_bottom)
+    Jᵁ_surface = on_architecture(arch, Jᵁ_surface)
+    Jⱽ_surface = on_architecture(arch, Jⱽ_surface)
+    Jᵀ_surface = on_architecture(arch, Jᵀ_surface)
+    Jˢ_surface = on_architecture(arch, Jˢ_surface)
+    Jᵁ_bottom  = on_architecture(arch, Jᵁ_bottom)
+    Jⱽ_bottom  = on_architecture(arch, Jⱽ_bottom)
+    Jᵀ_bottom  = on_architecture(arch, Jᵀ_bottom)
+    Jˢ_bottom  = on_architecture(arch, Jˢ_bottom)
 
-    Fᵁ = arch_array(arch, Fᵁ)
-    Fⱽ = arch_array(arch, Fⱽ)
+    Fᵁ = on_architecture(arch, Fᵁ)
+    Fⱽ = on_architecture(arch, Fⱽ)
 
     # Note: combine ROMS tendency + insolution
-    Fᵀ = arch_array(arch, Fᵀ)
+    Fᵀ = on_architecture(arch, Fᵀ)
     
     u_forcing = Forcing(interp_forcing, discrete_form=true, parameters=(n, tᶠ, Fᵁ))
     v_forcing = Forcing(interp_forcing, discrete_form=true, parameters=(n, tᶠ, Fⱽ))
