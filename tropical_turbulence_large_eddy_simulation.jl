@@ -6,17 +6,15 @@ using Oceanostics.TKEBudgetTerms: TurbulentKineticEnergy
 include("tropical_turbulence_setup.jl")
 
 arch = GPU()
-Nz = 96
-Nh = 128
+Nh = 64
 Lh = 256 #306
 
 hi_res_setup = tropical_turbulence_setup(arch; Nz=216)
 
-z = hi_res_setup.z[1:2:end]
+z = hi_res_setup.z[1:4:end]
+
 Nz = length(z) - 1
 setup = tropical_turbulence_setup(arch; Nz, z)
-
-@show setup.z[1]
 
 grid = RectilinearGrid(arch,
                        size = (Nh, Nh, Nz),
