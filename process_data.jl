@@ -210,3 +210,41 @@ file["Fᴵ"] = Fᴵ
 
 close(file)
 
+Nz = length(z)
+
+grid = RectilinearGrid(size = (1, 1, Nz),
+                       halo = (3, 3, 3),
+                       x = (0, 306),
+                       y = (0, 306),
+                       z = vcat(-108, z),
+                       topology = (Periodic, Periodic, Bounded))
+
+
+Un = Field{Nothing, Nothing, Center}(grid)
+Vn = Field{Nothing, Nothing, Center}(grid)
+Tn = Field{Nothing, Nothing, Center}(grid)
+Sn = Field{Nothing, Nothing, Center}(grid)
+
+backend = OnDisk()
+path = "tropical_turbulence_original_les_data.jld2"
+
+Ut = FieldTimeSeries{Nothing, Nothing, Center}(grid, time_seconds; backend, path, name="u")
+Vt = FieldTimeSeries{Nothing, Nothing, Center}(grid, time_seconds; backend, path, name="v")
+Tt = FieldTimeSeries{Nothing, Nothing, Center}(grid, time_seconds; backend, path, name="T")
+St = FieldTimeSeries{Nothing, Nothing, Center}(grid, time_seconds; backend, path, name="S")
+
+Nt = length(time_seconds)
+for n = 1:Nt
+    set!(Un, reshape(U[:, n], 1, 1, Nz))
+    set!(Ut, Un, n)
+
+    set!(Vn, reshape(V[:, n], 1, 1, Nz))
+    set!(Vt, Vn, n)
+
+    set!(Tn, reshape(T[:, n], 1, 1, Nz))
+    set!(Tt, Tn, n)
+
+    set!(Sn, reshape(S[:, n], 1, 1, Nz))
+    set!(St, Sn, n)
+end
+
