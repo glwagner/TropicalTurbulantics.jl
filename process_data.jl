@@ -54,12 +54,18 @@ U = dataset["ume"][:, :]
 V = dataset["vme"][:, :]
 T = dataset["tempme"][:, :]
 S = dataset["saltme"][:, :]
+Ri = dataset["RIG"][:, :]
+N² = dataset["N2"][:, :]
+S² = dataset["S2"][:, :]
+wu = dataset["uw"][:, :]
+wv = dataset["vw"][:, :]
+wT = dataset["tempw"][:, :]
+wS = dataset["saltw"][:, :]
 
 # Fix bottommost row
-U[216, :] .= U[215, :]
-V[216, :] .= V[215, :]
-T[216, :] .= T[215, :]
-S[216, :] .= S[215, :]
+for ϕ in (U, V, T, S, Ri, N², S², wu, wv, wT, wS)
+    ϕ[216, :] .= ϕ[215, :]
+end
 
 @printf("extrema(U) = (%.2e, %.2e) \n", extrema(U)...) 
 @printf("extrema(V) = (%.2e, %.2e) \n", extrema(V)...)
@@ -175,7 +181,8 @@ if make_plot
     
     axI = Axis(fig[5, 1], xlabel="Time (hrs)", ylabel="z (m)")
     hmI = heatmap!(axI, time_hours, z, permutedims(Fᴵ), colorrange=(0, 1e-5))
-    Colorbar(fig[5, 0], hmI, vertical=true, flipaxis=false, label="Solar insolation temperature flux divergence (ᵒC m s⁻¹)")
+    Colorbar(fig[5, 0], hmI, vertical=true, flipaxis=false,
+             label="Solar insolation temperature flux divergence (ᵒC m s⁻¹)")
     
     display(fig)
     
@@ -244,11 +251,17 @@ backend = OnDisk()
 path = "tropical_turbulence_whitt2022_0N140W.jld2"
 
 # Fields
-Ut = FieldTimeSeries{Nothing, Nothing, Center}(grid, time_seconds; backend, path, name="u")
-Vt = FieldTimeSeries{Nothing, Nothing, Center}(grid, time_seconds; backend, path, name="v")
-Tt = FieldTimeSeries{Nothing, Nothing, Center}(grid, time_seconds; backend, path, name="T")
-St = FieldTimeSeries{Nothing, Nothing, Center}(grid, time_seconds; backend, path, name="S")
-Rit = FieldTimeSeries{Nothing, Nothing, Face}(grid, time_seconds; backend, path, name="Ri")
+Ut  = FieldTimeSeries{Nothing, Nothing, Center}(grid, time_seconds; backend, path, name="u")
+Vt  = FieldTimeSeries{Nothing, Nothing, Center}(grid, time_seconds; backend, path, name="v")
+Tt  = FieldTimeSeries{Nothing, Nothing, Center}(grid, time_seconds; backend, path, name="T")
+St  = FieldTimeSeries{Nothing, Nothing, Center}(grid, time_seconds; backend, path, name="S")
+Rit = FieldTimeSeries{Nothing, Nothing, Center}(grid, time_seconds; backend, path, name="Ri")
+N²t = FieldTimeSeries{Nothing, Nothing, Center}(grid, time_seconds; backend, path, name="N²")
+S²t = FieldTimeSeries{Nothing, Nothing, Center}(grid, time_seconds; backend, path, name="S²")
+wut = FieldTimeSeries{Nothing, Nothing, Center}(grid, time_seconds; backend, path, name="wu")
+wvt = FieldTimeSeries{Nothing, Nothing, Center}(grid, time_seconds; backend, path, name="wv")
+wTt = FieldTimeSeries{Nothing, Nothing, Center}(grid, time_seconds; backend, path, name="wT")
+wSt = FieldTimeSeries{Nothing, Nothing, Center}(grid, time_seconds; backend, path, name="wS")
 
 #=
 # Surface bcs
@@ -273,7 +286,15 @@ set_from_data!(Ut, U)
 set_from_data!(Vt, V)
 set_from_data!(Tt, T)
 set_from_data!(St, S)
+set_from_data!(Rit, Ri)
+set_from_data!(N²t, N²)
+set_from_data!(S²t, S²)
+set_from_data!(wut, wu)
+set_from_data!(wvt, wv)
+set_from_data!(wTt, wT)
+set_from_data!(wSt, wS)
 
+#=
 # Compute Ri
 Ri = Field{Nothing, Nothing, Face}(grid)
 Rit = FieldTimeSeries{Nothing, Nothing, Face}(grid, time_seconds; backend, path, name="Ri")
@@ -299,4 +320,5 @@ for n = 1:Nt
     fill_halo_regions!(Ri)
     set!(Rit, Ri, n)
 end
+=#
 
