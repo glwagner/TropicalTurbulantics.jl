@@ -77,12 +77,17 @@ u, v, w = model.velocities
 T, S = model.tracers
 b = Oceananigans.BuoyancyModels.buoyancy(model)
 
+uw = @at (Center, Center, Face) u * w
+vw = @at (Center, Center, Face) v * w
+
 S²_op = @at (Center, Center, Face) ∂z(u)^2 + ∂z(v)^2
 S² = Field(S²_op)
 Ri = ∂z(b) / S²
 
 U = Field(Average(u, dims=(1, 2)))
 V = Field(Average(v, dims=(1, 2)))
+uw = Field(Average(uw, dims=(1, 2)))
+vw = Field(Average(vw, dims=(1, 2)))
 T_avg = Average(T, dims=(1, 2))
 S_avg = Average(S, dims=(1, 2))
 Ri_avg = Average(Ri, dims=(1, 2))
@@ -90,13 +95,18 @@ Ri_avg = Average(Ri, dims=(1, 2))
 e = TurbulentKineticEnergy(model, U=U, V=V)
 E = Average(e, dims=(1, 2))
 
-averaged_output = (; u=U, v=V, T=T_avg, S=S_avg, e=E, Ri=Ri_avg)
+averaged_output = (; u=U, v=V, T=T_avg, S=S_avg, e=E, Ri=Ri_avg, uw, vw)
 fields_output = (; u, v, w, T, S, e)
 
 simulation.output_writers[:avg] = JLD2OutputWriter(model, averaged_output;
                                                    schedule = TimeInterval(20minutes),
                                                    filename = string(prefix, "_averages.jld2"),
                                                    overwrite_existing = false)
+
+simulation.output_writers[:fluxes] = JLD2OutputWriter(model, (; uw, vw);
+                                                      schedule = AveragedTimeInterval(20minutes; window=5minutes),
+                                                      filename = string(prefix, "_averages.jld2"),
+                                                      overwrite_existing = false)
 
 simulation.output_writers[:xy] = JLD2OutputWriter(model, fields_output;
                                                   indices = (:, :, Nz),

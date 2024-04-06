@@ -11,8 +11,9 @@
 # * The bottommost cells in the ROMS data and forcing data are problematic, so we overwrite.
 
 using NCDatasets
-using GLMakie
+using Oceananigans
 using Oceananigans.Units
+using Oceananigans.BoundaryConditions: fill_halo_regions!
 using JLD2
 using Dates
 using Printf
@@ -32,6 +33,7 @@ function average_out!(Q, badvalue=0)
     return nothing
 end
 
+make_plot = false
 dir = "data_les"
 filename = "ROMS_PSH_6HRLIN_0N140W_360x360x216_22OCT2020.nc"
 jld2filename = "forcing_and_bcs_and_ics_0N140W.jld2"
@@ -63,6 +65,8 @@ S[216, :] .= S[215, :]
 @printf("extrema(V) = (%.2e, %.2e) \n", extrema(V)...)
 @printf("extrema(T) = (%.2e, %.2e) \n", extrema(T)...)
 @printf("extrema(S) = (%.2e, %.2e) \n", extrema(S)...)
+
+@show dataset
 
 Fᵁ = dataset["dUdtFORCE"][:, :]
 Fⱽ = dataset["dVdtFORCE"][:, :]
@@ -132,47 +136,51 @@ haline_contraction = - first(dataset["beta"][:])
 @printf("thermal expansion = %.2e \n", thermal_expansion)
 @printf("haline contraction = %.2e \n", haline_contraction)
 
-fig = Figure(size=(1600, 1600))
-
-axU = Axis(fig[1, 1], xlabel="Time (hr)", ylabel="z (m)")
-axV = Axis(fig[1, 2], xlabel="Time (hr)", ylabel="z (m)")
-axT = Axis(fig[3, 1], xlabel="Time (hr)", ylabel="z (m)")
-axS = Axis(fig[3, 2], xlabel="Time (hr)", ylabel="z (m)")
-
-hmU = heatmap!(axU, time_hours, z, permutedims(U), colormap=:balance, colorrange=(-1, 1))
-hmV = heatmap!(axV, time_hours, z, permutedims(V), colormap=:balance, colorrange=(-1, 1))
-hmT = heatmap!(axT, time_hours, z, permutedims(T), colormap=:thermal, colorrange=(20, 26.1))
-hmS = heatmap!(axS, time_hours, z, permutedims(S), colormap=:haline, colorrange=(34.9, 35.3))
-
-Colorbar(fig[1, 0], hmU, vertical=true, flipaxis=false, label="Zonal velocity (m s⁻¹)")
-Colorbar(fig[1, 3], hmV, vertical=true, label="Meridional velocity (m s⁻¹)")
-Colorbar(fig[3, 0], hmT, vertical=true, flipaxis=false, label="Temperature (ᵒC)")
-Colorbar(fig[3, 3], hmS, vertical=true, label="Salinity (g kg⁻¹)")
-
-axJU = Axis(fig[2, 1], xlabel="Time (hrs)", ylabel="Zonal momentum flux (m² s⁻²)")
-axJV = Axis(fig[2, 2], xlabel="Time (hrs)", ylabel="Meridional momentum flux (m² s⁻²)")
-axJT = Axis(fig[4, 1], xlabel="Time (hrs)", ylabel="Temperature flux (m² s⁻²)")
-axJS = Axis(fig[4, 2], xlabel="Time (hrs)", ylabel="Salt flux (m² s⁻²)")
-
-lines!(axJU, time_hours, Jᵁ_surface, label="surface")
-lines!(axJV, time_hours, Jⱽ_surface, label="surface")
-lines!(axJT, time_hours, Jᵀ_surface, label="surface")
-lines!(axJS, time_hours, Jˢ_surface, label="surface")
-
-lines!(axJU, time_hours, Jᵁ_bottom, label="bottom")
-lines!(axJV, time_hours, Jⱽ_bottom, label="bottom")
-lines!(axJT, time_hours, Jᵀ_bottom, label="bottom")
-lines!(axJS, time_hours, Jˢ_bottom, label="bottom")
-
-axislegend(axJU)
-
-axI = Axis(fig[5, 1], xlabel="Time (hrs)", ylabel="z (m)")
-hmI = heatmap!(axI, time_hours, z, permutedims(Fᴵ), colorrange=(0, 1e-5))
-Colorbar(fig[5, 0], hmI, vertical=true, flipaxis=false, label="Solar insolation temperature flux divergence (ᵒC m s⁻¹)")
-
-display(fig)
-
-save(figname, fig)
+if make_plot
+    using GLMakie
+    
+    fig = Figure(size=(1600, 1600))
+    
+    axU = Axis(fig[1, 1], xlabel="Time (hr)", ylabel="z (m)")
+    axV = Axis(fig[1, 2], xlabel="Time (hr)", ylabel="z (m)")
+    axT = Axis(fig[3, 1], xlabel="Time (hr)", ylabel="z (m)")
+    axS = Axis(fig[3, 2], xlabel="Time (hr)", ylabel="z (m)")
+    
+    hmU = heatmap!(axU, time_hours, z, permutedims(U), colormap=:balance, colorrange=(-1, 1))
+    hmV = heatmap!(axV, time_hours, z, permutedims(V), colormap=:balance, colorrange=(-1, 1))
+    hmT = heatmap!(axT, time_hours, z, permutedims(T), colormap=:thermal, colorrange=(20, 26.1))
+    hmS = heatmap!(axS, time_hours, z, permutedims(S), colormap=:haline, colorrange=(34.9, 35.3))
+    
+    Colorbar(fig[1, 0], hmU, vertical=true, flipaxis=false, label="Zonal velocity (m s⁻¹)")
+    Colorbar(fig[1, 3], hmV, vertical=true, label="Meridional velocity (m s⁻¹)")
+    Colorbar(fig[3, 0], hmT, vertical=true, flipaxis=false, label="Temperature (ᵒC)")
+    Colorbar(fig[3, 3], hmS, vertical=true, label="Salinity (g kg⁻¹)")
+    
+    axJU = Axis(fig[2, 1], xlabel="Time (hrs)", ylabel="Zonal momentum flux (m² s⁻²)")
+    axJV = Axis(fig[2, 2], xlabel="Time (hrs)", ylabel="Meridional momentum flux (m² s⁻²)")
+    axJT = Axis(fig[4, 1], xlabel="Time (hrs)", ylabel="Temperature flux (m² s⁻²)")
+    axJS = Axis(fig[4, 2], xlabel="Time (hrs)", ylabel="Salt flux (m² s⁻²)")
+    
+    lines!(axJU, time_hours, Jᵁ_surface, label="surface")
+    lines!(axJV, time_hours, Jⱽ_surface, label="surface")
+    lines!(axJT, time_hours, Jᵀ_surface, label="surface")
+    lines!(axJS, time_hours, Jˢ_surface, label="surface")
+    
+    lines!(axJU, time_hours, Jᵁ_bottom, label="bottom")
+    lines!(axJV, time_hours, Jⱽ_bottom, label="bottom")
+    lines!(axJT, time_hours, Jᵀ_bottom, label="bottom")
+    lines!(axJS, time_hours, Jˢ_bottom, label="bottom")
+    
+    axislegend(axJU)
+    
+    axI = Axis(fig[5, 1], xlabel="Time (hrs)", ylabel="z (m)")
+    hmI = heatmap!(axI, time_hours, z, permutedims(Fᴵ), colorrange=(0, 1e-5))
+    Colorbar(fig[5, 0], hmI, vertical=true, flipaxis=false, label="Solar insolation temperature flux divergence (ᵒC m s⁻¹)")
+    
+    display(fig)
+    
+    save(figname, fig)
+end
 
 #####
 ##### Save all the data
@@ -220,31 +228,75 @@ grid = RectilinearGrid(size = (1, 1, Nz),
                        topology = (Periodic, Periodic, Bounded))
 
 
-Un = Field{Nothing, Nothing, Center}(grid)
-Vn = Field{Nothing, Nothing, Center}(grid)
-Tn = Field{Nothing, Nothing, Center}(grid)
-Sn = Field{Nothing, Nothing, Center}(grid)
+ψ = Field{Nothing, Nothing, Center}(grid)
+
+function set_from_data!(ψt, data)
+    Nz, Nt = size(data)
+    for n = 1:Nt
+        set!(ψ, reshape(data[:, n], 1, 1, Nz))
+        fill_halo_regions!(ψ)
+        set!(ψt, ψ, n)
+    end
+    return nothing
+end
 
 backend = OnDisk()
-path = "tropical_turbulence_original_les_data.jld2"
+path = "tropical_turbulence_whitt2022_0N140W.jld2"
 
+# Fields
 Ut = FieldTimeSeries{Nothing, Nothing, Center}(grid, time_seconds; backend, path, name="u")
 Vt = FieldTimeSeries{Nothing, Nothing, Center}(grid, time_seconds; backend, path, name="v")
 Tt = FieldTimeSeries{Nothing, Nothing, Center}(grid, time_seconds; backend, path, name="T")
 St = FieldTimeSeries{Nothing, Nothing, Center}(grid, time_seconds; backend, path, name="S")
+Rit = FieldTimeSeries{Nothing, Nothing, Face}(grid, time_seconds; backend, path, name="Ri")
 
-Nt = length(time_seconds)
+#=
+# Surface bcs
+τxtt = FieldTimeSeries{Nothing, Nothing, Nothing}(grid, time_seconds; backend, path, name="τxt")
+τytt = FieldTimeSeries{Nothing, Nothing, Nothing}(grid, time_seconds; backend, path, name="τyt")
+JTtt = FieldTimeSeries{Nothing, Nothing, Nothing}(grid, time_seconds; backend, path, name="JTt")
+JStt = FieldTimeSeries{Nothing, Nothing, Nothing}(grid, time_seconds; backend, path, name="JSt")
+
+# Bottom bcs
+τxbt = FieldTimeSeries{Nothing, Nothing, Nothing}(grid, time_seconds; backend, path, name="τxb")
+τybt = FieldTimeSeries{Nothing, Nothing, Nothing}(grid, time_seconds; backend, path, name="τyb")
+JTbt = FieldTimeSeries{Nothing, Nothing, Nothing}(grid, time_seconds; backend, path, name="JTb")
+JSbt = FieldTimeSeries{Nothing, Nothing, Nothing}(grid, time_seconds; backend, path, name="JSb")
+
+Fut = FieldTimeSeries{Nothing, Nothing, Center}(grid, time_seconds; backend, path, name="Fu")
+Fvt = FieldTimeSeries{Nothing, Nothing, Center}(grid, time_seconds; backend, path, name="Fv")
+FTt = FieldTimeSeries{Nothing, Nothing, Center}(grid, time_seconds; backend, path, name="FT")
+FSt = FieldTimeSeries{Nothing, Nothing, Center}(grid, time_seconds; backend, path, name="FS")
+=#
+
+set_from_data!(Ut, U)
+set_from_data!(Vt, V)
+set_from_data!(Tt, T)
+set_from_data!(St, S)
+
+# Compute Ri
+Ri = Field{Nothing, Nothing, Face}(grid)
+Rit = FieldTimeSeries{Nothing, Nothing, Face}(grid, time_seconds; backend, path, name="Ri")
+Ut = FieldTimeSeries(path, "u")
+Vt = FieldTimeSeries(path, "v")
+Tt = FieldTimeSeries(path, "T")
+St = FieldTimeSeries(path, "S")
+Nt = size(U, 2)
+α = thermal_expansion
+β = haline_contraction
+g = 9.81
+
 for n = 1:Nt
-    set!(Un, reshape(U[:, n], 1, 1, Nz))
-    set!(Ut, Un, n)
+    Un = Ut[n]
+    Vn = Vt[n]
+    Tn = Tt[n]
+    Sn = St[n]
 
-    set!(Vn, reshape(V[:, n], 1, 1, Nz))
-    set!(Vt, Vn, n)
+    S² = ∂z(Un)^2 + ∂z(Vn)^2
+    N² = g * (α * ∂z(Tn) - β * ∂z(Sn))
+    Ri .= N² / S²
 
-    set!(Tn, reshape(T[:, n], 1, 1, Nz))
-    set!(Tt, Tn, n)
-
-    set!(Sn, reshape(S[:, n], 1, 1, Nz))
-    set!(St, Sn, n)
+    fill_halo_regions!(Ri)
+    set!(Rit, Ri, n)
 end
 
