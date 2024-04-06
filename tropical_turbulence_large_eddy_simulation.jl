@@ -55,9 +55,12 @@ function progress(sim)
     u, v, w = sim.model.velocities
     elapsed = 1e-9 * (time_ns() - wall_time[])
 
-    msg = @sprintf("Iter: %d, time: %s, Δt: %s, wall time: %s, forcing time index: %d, max|u|: (%.2e, %.2e, %.2e)",
+    msg = @sprintf("Iter: %d, time: %s, Δt: %s, wall time: %s",
                    iteration(sim), prettytime(sim), prettytime(sim.Δt),
-                   prettytime(elapsed), setup.forcing_time_index[],
+                   prettytime(elapsed))
+
+    msg *= @sprintf(", forcing time index: %d, max|u|: (%.2e, %.2e, %.2e)",
+                   setup.forcing_time_index[],
                    maximum(abs, interior(u)),
                    maximum(abs, interior(v)),
                    maximum(abs, interior(w)))
