@@ -199,7 +199,7 @@ Label(fig[0, 0:7], title)
 
 display(fig)
 
-record(fig, "tropical_turbulence_catke_les_comparison_reversed_forcing.mp4", 1:10:Nt, framerate=12) do nn
+record(fig, "tropical_turbulence_catke_les_comparison.mp4", 1:10:Nt, framerate=12) do nn
     @info "Drawing frame $nn of $Nt..."
     n[] = nn
 end
