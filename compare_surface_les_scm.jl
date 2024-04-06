@@ -15,8 +15,10 @@ using Oceananigans
 using Oceananigans.Units
 using GLMakie
 
-lesfilename = "tropical_turbulence_Nz108_averages.jld2"
+#lesfilename = "tropical_turbulence_Nz108_averages.jld2"
+lesfilename = "tropical_turbulence_Nz54_averages.jld2"
 scmfilename = "tropical_turbulence_single_column_model_Nz108.jld2"
+#scmfilename = "tropical_turbulence_single_column_model_Nz54.jld2"
 #scmfilename = "tropical_turbulence_single_column_model_Nz27.jld2"
 #scmfilename = "tropical_turbulence_single_column_model_Nz216.jld2"
 
@@ -46,27 +48,28 @@ u0scm = utscm[1, 1, Nzscm, :]
 v0scm = vtscm[1, 1, Nzscm, :]
 
 fig = Figure(size=(1200, 600))
+
 axT = Axis(fig[1, 1], xlabel="Time (days)", ylabel="Surface temperature (ᵒC)")
 axS = Axis(fig[2, 1], xlabel="Time (days)", ylabel="Surface salinity (g kg⁻¹)")
 axu = Axis(fig[3, 1], xlabel="Time (days)", ylabel="Surface zonal velocity (m s⁻¹)")
 
-ylims!(axT, 24, 32)
-ylims!(axS, 30, 36)
-ylims!(axu, -2.5, 0.2)
-
-lines!(axT, t ./ days, T0les, label="LES")
-lines!(axS, t ./ days, S0les, label="LES")
-lines!(axu, t ./ days, u0les, label="LES")
+ylims!(axT, 24.6, 26.8)
+ylims!(axS, 34.8, 35.1)
+ylims!(axu, -1, 0.2)
 
 lines!(axT, t ./ days, T0scm, label="CATKE")
 lines!(axS, t ./ days, S0scm, label="CATKE")
 lines!(axu, t ./ days, u0scm, label="CATKE")
 
+lines!(axT, t ./ days, T0les, label="Oceananigans LES")
+lines!(axS, t ./ days, S0les, label="Oceananigans LES")
+lines!(axu, t ./ days, u0les, label="Oceananigans LES")
+
 lines!(axT, twhitt_seconds ./ days, T0whitt)
 lines!(axS, twhitt_seconds ./ days, S0whitt)
 lines!(axu, twhitt_seconds ./ days, u0whitt)
 
-axislegend(axS, position=:lb)
+axislegend(axS, position=:lt)
 
 display(fig)
 

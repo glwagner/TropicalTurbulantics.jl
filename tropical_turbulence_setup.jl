@@ -23,7 +23,7 @@ using Printf
     F = F₁ + dFdt * (t - t₁)
 
     #return F
-    return ifelse(F > 1.0, 0.0, F)
+    return ifelse(F > 1, 0, F)
 end
 
 @inline function interp_bc(i, j, grid, clock, model_fields, params)
@@ -100,7 +100,7 @@ function tropical_turbulence_setup(arch = CPU();
     Fᵁ = file["Fᵁ"]
     Fⱽ = file["Fⱽ"]
 
-    # Note: combine ROMS tendency + insolution
+    # Note: combine ROMS tendency + insolation
     Fᵀ = file["Fᵀ"] .+ file["Fᴵ"]
 
     # Surface fluxes
@@ -220,10 +220,10 @@ function tropical_turbulence_setup(arch = CPU();
     T_bottom_bc  = FluxBoundaryCondition(interp_bc, discrete_form=true, parameters=(n, tᶠ, Jᵀ_bottom))
     S_bottom_bc  = FluxBoundaryCondition(interp_bc, discrete_form=true, parameters=(n, tᶠ, Jˢ_bottom))
 
-    u_bcs = FieldBoundaryConditions(top=u_surface_bc) #, bottom=u_bottom_bc)
-    v_bcs = FieldBoundaryConditions(top=v_surface_bc) #, bottom=v_bottom_bc)
-    T_bcs = FieldBoundaryConditions(top=T_surface_bc) #, bottom=T_bottom_bc)
-    S_bcs = FieldBoundaryConditions(top=S_surface_bc) #, bottom=S_bottom_bc)
+    u_bcs = FieldBoundaryConditions(top=u_surface_bc, bottom=u_bottom_bc)
+    v_bcs = FieldBoundaryConditions(top=v_surface_bc, bottom=v_bottom_bc)
+    T_bcs = FieldBoundaryConditions(top=T_surface_bc, bottom=T_bottom_bc)
+    S_bcs = FieldBoundaryConditions(top=S_surface_bc, bottom=S_bottom_bc)
 
     #####
     ##### Build setup

@@ -22,14 +22,33 @@ grid = RectilinearGrid(arch,
                        topology = (Flat, Flat, Bounded))
 
 @load "optimal_catke.jld2" optimal_catke
-default_catke = CATKEVerticalDiffusivity()
 
-model = HydrostaticFreeSurfaceModel(; grid,
+optimal_mixing_length = optimal_catke.mixing_length
+mixing_length_parameters = Dict(name => getproperty(optimal_mixing_length, name)
+                                for name in propertynames(optimal_mixing_length))
+
+optimal_turbulent_kinetic_energy_equation = optimal_catke.turbulent_kinetic_energy_equation
+turbulent_kinetic_energy_equation_parameters =
+    Dict(name => getproperty(optimal_turbulent_kinetic_energy_equation, name)
+         for name in propertynames(optimal_turbulent_kinetic_energy_equation))
+
+mixing_length_parameters[:Cᵇ] = 1.0
+turbulent_kinetic_energy_equation_parameters[:Cᵂϵ] = 0.0
+
+mixing_length = MixingLength(; mixing_length_parameters...)
+turbulent_kinetic_energy_equation =
+    TurbulentKineticEnergyEquation(; turbulent_kinetic_energy_equation_parameters...)
+
+closure = CATKEVerticalDiffusivity(; mixing_length, turbulent_kinetic_energy_equation)
+
+# Default:
+# closure = CATKEVerticalDiffusivity()
+
+model = HydrostaticFreeSurfaceModel(; grid, closure,
                                     tracers = (:T, :S, :e),
                                     buoyancy = setup.buoyancy,
                                     forcing = setup.forcing,
-                                    boundary_conditions = setup.boundary_conditions,
-                                    closure = optimal_catke)
+                                    boundary_conditions = setup.boundary_conditions)
 
 set!(model; e=1e-9, setup.initial_conditions...)
 
@@ -38,8 +57,9 @@ set!(model; e=1e-9, setup.initial_conditions...)
 ##### + callback to update the forcing time index every iteration
 #####
 
+Δt = 1minute
 stop_time = 34days
-simulation = Simulation(model; Δt=2minute, stop_time)
+simulation = Simulation(model; Δt, stop_time)
 
 simulation.callbacks[:update_time_index] = setup.update_time_index
 
@@ -59,11 +79,17 @@ end
 simulation.callbacks[:progress] = Callback(progress, IterationInterval(10))
 
 u, v, w = model.velocities
+T = model.tracers.T
 b = Oceananigans.BuoyancyModels.buoyancy(model)
+κc = model.diffusivity_fields.κᶜ
+κu = model.diffusivity_fields.κᵘ
+
+wT = @at (Center, Center, Face) κc * ∂z(T)
+wu = @at (Center, Center, Face) κu * ∂z(u)
 
 Ri = ∂z(b) / (∂z(u)^2 + ∂z(v)^2)
-outputs = merge(model.velocities, model.tracers, (; Ri, b)) 
-@show filename = string("tropical_turbulence_single_column_model_Nz", Nz, ".jld2")
+outputs = merge(model.velocities, model.tracers, (; Ri, b, κc, κu, wT, wu)) 
+filename = string("tropical_turbulence_single_column_model_Nz", Nz, ".jld2")
 
 simulation.output_writers[:jld2] = JLD2OutputWriter(model, outputs,
                                                     schedule = TimeInterval(20minutes);
