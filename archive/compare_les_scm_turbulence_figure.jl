@@ -7,7 +7,8 @@ using JLD2
 
 lesfilename = "tropical_turbulence_Nz54_averages.jld2"
 #scmfilename = "tropical_turbulence_single_column_model_Nz108.jld2"
-scmfilename = "tropical_turbulence_single_column_model_tiny_time_step_Nz54.jld2"
+#scmfilename = "tropical_turbulence_single_column_model_tiny_time_step_Nz54.jld2"
+scmfilename = "single_column_tropical_turbulence_tiny_time_step_Nz108.jld2"
 
 utles = FieldTimeSeries(lesfilename, "u")
 vtles = FieldTimeSeries(lesfilename, "v")
@@ -20,6 +21,8 @@ vtscm = FieldTimeSeries(scmfilename, "v")
 Ttscm = FieldTimeSeries(scmfilename, "T")
 etscm = FieldTimeSeries(scmfilename, "e")
 Rtscm = FieldTimeSeries(scmfilename, "Ri")
+
+Nt = length(utles)
 
 uscm = Array(interior(utscm, 1, 1, :, 1:Nt))
 ules = Array(interior(utles, 1, 1, :, 1:Nt))
@@ -55,7 +58,6 @@ for n = 1:Nt
     un = utles[n]
     vn = vtles[n]
     Tn = Ttles[n]
-    Sn = Stles[n]
 
     ψles .= ∂z(Tn)
     fill_halo_regions!(ψles)

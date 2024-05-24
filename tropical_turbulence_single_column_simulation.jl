@@ -12,7 +12,7 @@ include("tropical_turbulence_setup.jl")
 
 arch = CPU()
 hi_res_setup = tropical_turbulence_setup(arch; Nz=216)
-z = hi_res_setup.z[1:2:end]
+z = hi_res_setup.z[1:4:end]
 Nz = length(z) - 1
 setup = tropical_turbulence_setup(arch; Nz, z)
 
@@ -22,6 +22,7 @@ grid = RectilinearGrid(arch,
                        topology = (Flat, Flat, Bounded))
 
 @load "optimal_catke.jld2" optimal_catke
+@show optimal_catke
 
 optimal_mixing_length = optimal_catke.mixing_length
 mixing_length_parameters = Dict(name => getproperty(optimal_mixing_length, name)
@@ -57,7 +58,7 @@ set!(model; e=1e-9, setup.initial_conditions...)
 ##### + callback to update the forcing time index every iteration
 #####
 
-Δt = 1minute
+Δt = 10.0 #5minute
 stop_time = 34days
 simulation = Simulation(model; Δt, stop_time)
 
@@ -76,20 +77,28 @@ function progress(sim)
     return nothing
 end
 
-simulation.callbacks[:progress] = Callback(progress, IterationInterval(10))
+simulation.callbacks[:progress] = Callback(progress, IterationInterval(100))
 
 u, v, w = model.velocities
 T = model.tracers.T
 b = Oceananigans.BuoyancyModels.buoyancy(model)
-κc = model.diffusivity_fields.κᶜ
-κu = model.diffusivity_fields.κᵘ
+N² = @at (Center, Center, Center) ∂z(b)
+S² = @at (Center, Center, Center) ∂z(u)^2 + ∂z(v)^2
+κc = model.diffusivity_fields.κc
+κu = model.diffusivity_fields.κu
 
-wT = @at (Center, Center, Face) κc * ∂z(T)
-wu = @at (Center, Center, Face) κu * ∂z(u)
+# Note the location for consistency w/ LES
+wT = @at (Center, Center, Center) κc * ∂z(T) * -1
+wu = @at (Center, Center, Center) κu * ∂z(u) * -1
+Ri = @at (Center, Center, Center) ∂z(b) / (∂z(u)^2 + ∂z(v)^2)
 
-Ri = ∂z(b) / (∂z(u)^2 + ∂z(v)^2)
-outputs = merge(model.velocities, model.tracers, (; Ri, b, κc, κu, wT, wu)) 
-filename = string("tropical_turbulence_single_column_model_Nz", Nz, ".jld2")
+# Let's save these too...
+wT_ccf = @at (Center, Center, Face) κc * ∂z(T) * -1 
+wu_ccf = @at (Center, Center, Face) κu * ∂z(u) * -1
+Ri_ccf = @at (Center, Center, Face) ∂z(b) / (∂z(u)^2 + ∂z(v)^2)
+
+outputs = merge(model.velocities, model.tracers, (; Ri, b, N², S², κc, κu, wT, wu, wT_ccf, wu_ccf, Ri_ccf)) 
+filename = string("single_column_tropical_turbulence_tiny_time_step_Nz", Nz, ".jld2")
 
 simulation.output_writers[:jld2] = JLD2OutputWriter(model, outputs,
                                                     schedule = TimeInterval(20minutes);

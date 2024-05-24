@@ -27,6 +27,7 @@ docs/site/
 *.nc
 *.jld2
 *.png
+*.pdf
 *.DS_Store
 *.swp
 *.mp4

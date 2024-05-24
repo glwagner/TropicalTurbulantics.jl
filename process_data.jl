@@ -50,10 +50,10 @@ time_seconds = datetime2unix.(time_dates)
 time_seconds .-= time_seconds[1]
 time_hours = time_seconds ./ hours
 
-U = dataset["ume"][:, :]
-V = dataset["vme"][:, :]
-T = dataset["tempme"][:, :]
-S = dataset["saltme"][:, :]
+U  = dataset["ume"][:, :]
+V  = dataset["vme"][:, :]
+T  = dataset["tempme"][:, :]
+S  = dataset["saltme"][:, :]
 Ri = dataset["RIG"][:, :]
 N² = dataset["N2"][:, :]
 S² = dataset["S2"][:, :]
@@ -138,6 +138,8 @@ thermal_expansion = first(dataset["alpha"][:])
 
 # Note sign convention
 haline_contraction = - first(dataset["beta"][:])
+
+close(dataset)
 
 @printf("thermal expansion = %.2e \n", thermal_expansion)
 @printf("haline contraction = %.2e \n", haline_contraction)
@@ -238,17 +240,46 @@ grid = RectilinearGrid(size = (1, 1, Nz),
 ψ = Field{Nothing, Nothing, Center}(grid)
 
 function set_from_data!(ψt, data)
+    @info "Setting $(summary(ψt))..."
+    start_time = time_ns()
     Nz, Nt = size(data)
     for n = 1:Nt
         set!(ψ, reshape(data[:, n], 1, 1, Nz))
         fill_halo_regions!(ψ)
         set!(ψt, ψ, n)
     end
+    elapsed = 1e-9 * (time_ns() - start_time)
+    @info string("    ... done (", prettytime(elapsed), ")")
     return nothing
 end
 
+function set_from_data!(many_ψt::Tuple, many_data::Tuple)
+    @info "Setting fields..."
+    for ψt in many_ψt
+        @info summary(ψt)
+    end
+
+    start_time = time_ns()
+    Nz, Nt = size(many_data[1])
+    for n = 1:Nt
+        for (ψ, data) in zip(many_ψt, many_data)
+            set!(ψ, reshape(data[:, n], 1, 1, Nz))
+            fill_halo_regions!(ψ)
+            set!(ψt, ψ, n)
+        end
+    end
+
+    elapsed = 1e-9 * (time_ns() - start_time)
+    @info string("    ... done (", prettytime(elapsed), ")")
+
+    return nothing
+end
+
+
+
 backend = OnDisk()
 path = "tropical_turbulence_whitt2022_0N140W.jld2"
+rm(path; force=true)
 
 # Fields
 Ut  = FieldTimeSeries{Nothing, Nothing, Center}(grid, time_seconds; backend, path, name="u")
@@ -282,43 +313,19 @@ FTt = FieldTimeSeries{Nothing, Nothing, Center}(grid, time_seconds; backend, pat
 FSt = FieldTimeSeries{Nothing, Nothing, Center}(grid, time_seconds; backend, path, name="FS")
 =#
 
-set_from_data!(Ut, U)
-set_from_data!(Vt, V)
-set_from_data!(Tt, T)
-set_from_data!(St, S)
-set_from_data!(Rit, Ri)
-set_from_data!(N²t, N²)
-set_from_data!(S²t, S²)
-set_from_data!(wut, wu)
-set_from_data!(wvt, wv)
-set_from_data!(wTt, wT)
-set_from_data!(wSt, wS)
+# set_from_data!(Ut, U)
+# set_from_data!(Vt, V)
+# set_from_data!(Tt, T)
+# set_from_data!(St, S)
+# set_from_data!(Rit, Ri)
+# set_from_data!(N²t, N²)
+# set_from_data!(S²t, S²)
+# set_from_data!(wut, wu)
+# set_from_data!(wvt, wv)
+# set_from_data!(wTt, wT)
+# set_from_data!(wSt, wS)
 
-#=
-# Compute Ri
-Ri = Field{Nothing, Nothing, Face}(grid)
-Rit = FieldTimeSeries{Nothing, Nothing, Face}(grid, time_seconds; backend, path, name="Ri")
-Ut = FieldTimeSeries(path, "u")
-Vt = FieldTimeSeries(path, "v")
-Tt = FieldTimeSeries(path, "T")
-St = FieldTimeSeries(path, "S")
-Nt = size(U, 2)
-α = thermal_expansion
-β = haline_contraction
-g = 9.81
-
-for n = 1:Nt
-    Un = Ut[n]
-    Vn = Vt[n]
-    Tn = Tt[n]
-    Sn = St[n]
-
-    S² = ∂z(Un)^2 + ∂z(Vn)^2
-    N² = g * (α * ∂z(Tn) - β * ∂z(Sn))
-    Ri .= N² / S²
-
-    fill_halo_regions!(Ri)
-    set!(Rit, Ri, n)
-end
-=#
+data = (U, V, T, S, Ri, N², S², wu, wv, wT, wS)
+fts  = (Ut, Vt, Tt, St, Rit, N²t, S²t, wut, wvt, wTt, wSt)
+set_from_data!(fts, data)
 
