@@ -160,7 +160,7 @@ Colorbar(fig[3:4, 2], hm; ticks, label)
 
 Rles[Rles .< 0] .= NaN
 Rscm[Rscm .< 0] .= NaN
-colorrange = (0.17, 0.3)
+colorrange = (0.15, 0.3)
 colormap = :tempo
 hm = heatmap!(ax_R_les, tlesdays, zles, Rles; colormap, colorrange, nan_color=:red)
 hm = heatmap!(ax_R_scm, tscmdays, zscm, Rscm; colormap, colorrange, nan_color=:red)

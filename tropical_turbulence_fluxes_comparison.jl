@@ -25,8 +25,8 @@ tgls = datetime2unix.(tgls_dates)
 tgls .-= tgls[1]
 tglsdays = tgls ./ days
 
-# wTtles = FieldTimeSeries(lesfilename, "wT")
-# wTtscm = FieldTimeSeries(scmfilename, "wT_ccf")
+wTtles = FieldTimeSeries(lesfilename, "wT")
+wTtscm = FieldTimeSeries(scmfilename, "wT_ccf")
 
 tles = wTtles.times
 tlesdays = tles ./ days

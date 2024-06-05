@@ -114,8 +114,8 @@ Riles_q3 = zeros(Nzles)
 N²les_q3 = zeros(Nzles)
 S²les_q3 = zeros(Nzles)
 
-q1 = 0.35
-q3 = 0.65
+q1 = 0.25
+q3 = 0.75
 
 for k = 1:Nzscm
     Riscm_q1[k] = quantile(view(Riscm, :, k), q1)
@@ -152,10 +152,10 @@ scmcolor = :royalblue
 d = 4.0
 densedash = Linestyle([0.0, d, 1.7d, 2.7d])
 
-lines!(axRi, Riles_med, zles, color=lescolor, label="LES")
+lines!(axRi, Riles_med, zles, color=lescolor, label="Large eddy simulation (Whitt et al. 2022)")
 lines!(axRi, Riscm_med, zscm, color=scmcolor, label="CATKE")
 
-Legend(fig[0, 1:3], axRi, nbanks=2)
+Legend(fig[0, 1:3], axRi, nbanks=2, tellheight=true, framevisible=false)
 
 band!(axRi, Point2f.(Riles_q1, zles), Point2f.(Riles_q3, zles), color=(lescolor, αles))
 band!(axRi, Point2f.(Riscm_q1, zscm), Point2f.(Riscm_q3, zscm), color=(scmcolor, αscm))
@@ -181,9 +181,9 @@ band!(axS², Point2f.(S²scm_q1, zscm), Point2f.(S²scm_q3, zscm), color=(scmcol
 #lines!(axS², S²les_avg, zles, color=lescolor, linestyle=densedash)
 #lines!(axS², S²scm_avg, zscm, color=scmcolor, linestyle=densedash)
 
-xlims!(axRi, 0.17, 0.35)
+xlims!(axRi, 0.15, 0.35)
 xlims!(axN², -5e-5, 2.9e-4)
-xlims!(axS², 0, 1.1e-3)
+xlims!(axS², 0, 1.2e-3)
 
 ylims!(axRi, -90, 0)
 ylims!(axN², -90, 0)
